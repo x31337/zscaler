@@ -6,109 +6,187 @@
   <title>Zscaler Internet Security</title>
   <link rel="stylesheet" href="popup.css">
   <style>
+    /* Header styles */
+    .header {
+      height: 42px;
+      padding: 8px;
+      background-color: #0074d4;
+      display: flex;
+      align-items: center;
+    }
+
+    .header-left {
+      max-width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo {
+      height: 38px;
+      width: 38px;
+      padding: 2px;
+      object-fit: contain;
+    }
+
+    .header-status {
+      flex: 1;
+      min-width: 180px;
+      padding-left: 8px;
+    }
+
+    .status-text {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      line-height: 1.3;
+      color: white;
+    }
+
+    .status-description {
+      font-size: 11px;
+      opacity: 0.9;
+      letter-spacing: 0.2px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
     /* Portal section styling */
     .portal-container {
-      padding: 12px;
+      padding: 10px 16px;
       border-top: 1px solid #e0e0e0;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
-    
+
     .portal-container h3 {
-      margin-top: 0;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: #333;
+      margin: 0 0 8px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #444;
+      letter-spacing: 0.3px;
     }
-    
+
+    .portal-section {
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      padding: 8px;
+      margin-bottom: 6px;
+      border: 1px solid #eee;
+    }
+
     .portal-status {
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
-    
+
     .status-indicator {
       display: flex;
       align-items: center;
+      font-size: 11px;
+      color: #555;
+      letter-spacing: 0.3px;
     }
-    
+
     .status-dot {
-      width: 10px;
-      height: 10px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background-color: #ccc;
-      margin-right: 8px;
+      margin-right: 6px;
       display: inline-block;
     }
-    
+
     .status-dot.connected {
       background-color: #4CAF50;
+      box-shadow: 0 0 4px rgba(76, 175, 80, 0.4);
     }
-    
+
     .status-dot.disconnected {
       background-color: #F44336;
+      box-shadow: 0 0 4px rgba(244, 67, 54, 0.4);
     }
-    
-    .portal-controls {
-      margin-bottom: 10px;
-    }
-    
-    .portal-config {
-      background-color: #f5f5f5;
-      border-radius: 4px;
-      padding: 8px;
-    }
-    
+
     .config-row {
       display: flex;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
-    
+
     .config-row label {
-      flex: 0 0 80px;
-      font-size: 12px;
+      flex: 0 0 65px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #666;
     }
-    
-    .config-row input {
+
+    .config-row input,
+    .portal-input {
       flex: 1;
-      padding: 4px 8px;
-      border: 1px solid #ccc;
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #ddd;
       border-radius: 4px;
       font-size: 12px;
+      letter-spacing: 0.2px;
+      transition: all 0.2s ease;
     }
-    
+
+    .config-row input:focus,
+    .portal-input:focus {
+      border-color: #0074d4;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(0, 116, 212, 0.1);
+    }
+
     .config-actions {
       display: flex;
+      gap: 4px;
       justify-content: flex-end;
+      margin-top: 6px;
     }
-    
+
     .btn-small {
-      font-size: 12px;
-      padding: 4px 8px;
+      font-size: 11px;
+      padding: 3px 8px;
+      min-width: 50px;
+      letter-spacing: 0.2px;
+      font-weight: 500;
+      height: 22px;
+      line-height: 16px;
+    }
+
+    .btn.secondary {
+      background-color: transparent;
+      border: 1px solid #0074d4;
+      color: #0074d4;
+    }
+
+    .btn.secondary:hover {
+      background-color: rgba(0, 116, 212, 0.1);
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <img src="../icons/ZscalerAppSplash.png" alt="Zscaler Logo" class="logo">
-      <h1>Zscaler Security</h1>
-    </div>
-    
-    <div class="status-container">
-      <div class="status-icon">
-        <img id="statusIcon" src="../icons/icon-enabled-48.png" alt="Status">
+      <!-- Simplified header-left with just the logo -->
+      <div class="header-left">
+        <img src="../icons/ZscalerAppSplash.png" alt="Z" class="logo">
       </div>
-      <div class="status-text">
-        <h2>Status: <span id="statusText">Protected</span></h2>
-        <p id="statusDescription">Traffic protected by Zscaler</p>
+      
+      <!-- Status section with more direct structure -->
+      <div class="header-status">
+        <div class="status-text">
+          <span id="statusText"></span>
+          <span id="statusDescription" class="status-description"></span>
+        </div>
       </div>
-    </div>
-    
-    <div class="toggle-container">
-      <div class="toggle-label">Zscaler Protection</div>
-      <label class="toggle-switch">
-        <input type="checkbox" id="protectionToggle" checked>
-        <span class="toggle-slider"></span>
-      </label>
+      
+      <!-- Toggle switch -->
+      <div class="header-toggle">
+        <label class="toggle-switch">
+          <input type="checkbox" id="protectionToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
     </div>
     
     <div class="info-container">
@@ -116,51 +194,75 @@
         <div class="info-label">Cloud:</div>
         <div class="info-value" id="cloudName">zscaler.net</div>
       </div>
-      <div class="info-row">
-        <div class="info-label">User:</div>
-        <div class="info-value" id="userName">User</div>
+      
+      <!-- IP Section - simplified labels -->
+      <div class="ip-section-title">Network</div>
+      
+      <div class="ip-category">
+        <div class="ip-category-label docker">Container:</div>
+        <div class="ip-category-value" id="dockerIP">Loading...</div>
       </div>
-      <div class="info-row">
-        <div class="info-label">Public IP:</div>
-        <div class="info-value" id="publicIP">Loading...</div>
+      
+      <div class="ip-category">
+        <div class="ip-category-label non-private">Public:</div>
+        <div class="ip-category-value" id="nonPrivateIP">Loading...</div>
       </div>
-      <div class="info-row">
-        <div class="info-label">Private IP:</div>
-        <div class="info-value" id="privateIP">Loading...</div>
+      
+      <div class="ip-category">
+        <div class="ip-category-label private">Local:</div>
+        <div class="ip-category-value" id="privateIP">Loading...</div>
       </div>
+      
       <div class="info-row">
-        <div class="info-label">Version:</div>
+        <div class="info-label">Build:</div>
         <div class="info-value">1.0.0</div>
       </div>
     </div>
     
     <div class="portal-container">
-      <h3>Company Portal</h3>
+      <h3>Authentication</h3>
       
-      <div class="portal-status">
-        <div class="status-indicator">
-          <span id="portalStatusDot" class="status-dot"></span>
-          <span id="portalStatusText">Checking portal status...</span>
+      <div class="portal-section">
+        <div class="portal-status">
+          <div class="status-indicator">
+            <span id="portalStatusDot" class="status-dot"></span>
+            <span id="portalStatusText">Enter email to configure</span>
+          </div>
+        </div>
+        
+        <div class="portal-config">
+          <div class="config-row">
+            <input type="email" id="portalEmail" placeholder="Enter corporate email" class="portal-input full-width">
+          </div>
+          <div class="config-actions">
+            <button id="savePortalConfig" class="btn btn-small">Configure</button>
+            <button id="portalLoginBtn" class="btn btn-small secondary">Access</button>
+          </div>
         </div>
       </div>
       
-      <div class="portal-controls">
-        <button id="portalLoginBtn" class="btn">Open Portal</button>
-      </div>
-      
-      <div class="portal-config">
-        <div class="config-row">
-          <label for="portalURL">Portal URL:</label>
-          <input type="text" id="portalURL" placeholder="Enter portal URL">
+      <div class="portal-section" style="margin-top: 8px;">
+        <div class="portal-status">
+          <div class="status-indicator">
+            <span id="partnerPortalStatusDot" class="status-dot"></span>
+            <span id="partnerPortalStatusText">Enter email to configure</span>
+          </div>
         </div>
-        <div class="config-actions">
-          <button id="savePortalURL" class="btn btn-small">Save</button>
+        
+        <div class="portal-config">
+          <div class="config-row">
+            <input type="email" id="partnerPortalEmail" placeholder="Enter partner email" class="portal-input full-width">
+          </div>
+          <div class="config-actions">
+            <button id="savePartnerPortalConfig" class="btn btn-small">Configure</button>
+            <button id="partnerPortalLoginBtn" class="btn btn-small secondary">Access</button>
+          </div>
         </div>
       </div>
     </div>
-    
+
     <div class="footer">
-      <button id="refreshBtn" class="btn">Refresh Status</button>
+      <button id="refreshBtn" class="btn">Refresh</button>
     </div>
   </div>
   

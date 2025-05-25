@@ -8,8 +8,13 @@ const defaultState = {
   userName: 'User',
   lastChecked: Date.now(),
   portalURL: 'https://portal.zscaler.net',
+  portalEmail: '',
   portalLoginStatus: false,
-  portalLastChecked: null
+  portalLastChecked: null,
+  partnerPortalURL: '',
+  partnerPortalEmail: '',
+  partnerPortalLoginStatus: false,
+  partnerPortalLastChecked: null
 };
 
 // Initialize extension state
@@ -116,16 +121,22 @@ function simulateConnectionCheck() {
 // Check portal login status
 async function checkPortalLoginStatus() {
   try {
-    // Get current portal URL from storage
+    // Get current portal URL and email from storage
     const state = await new Promise(resolve => {
-      chrome.storage.local.get(['portalURL'], resolve);
+      chrome.storage.local.get(['portalURL', 'portalEmail'], resolve);
     });
     
     const portalURL = state.portalURL || defaultState.portalURL;
+    const portalEmail = state.portalEmail || defaultState.portalEmail;
     
     // If no portal URL is configured, return false
     if (!portalURL || portalURL.trim() === '') {
       return { success: true, loggedIn: false, message: 'No portal URL configured' };
+    }
+    
+    // If no email is configured, return false
+    if (!portalEmail || portalEmail.trim() === '') {
+      return { success: true, loggedIn: false, message: 'No email configured' };
     }
     
     // In a real implementation, we would check the login status by making a request
@@ -200,6 +211,76 @@ async function updatePortalURL(url) {
     console.error('Error updating portal URL:', error);
     return { success: false, message: 'Error updating portal URL' };
   }
+}
+
+// Update portal configuration (URL and email)
+async function updatePortalConfig(url, email) {
+  try {
+    // Validate URL
+    let portalURL = url.trim();
+    
+    // Add https:// if not present and URL is not empty
+    if (portalURL !== '' && !portalURL.startsWith('http://') && !portalURL.startsWith('https://')) {
+      portalURL = 'https://' + portalURL;
+    }
+    
+    // Validate email
+    const portalEmail = email.trim();
+    if (portalEmail !== '' && !isValidEmail(portalEmail)) {
+      return { success: false, message: 'Invalid email format' };
+    }
+    
+    // Update state in storage
+    chrome.storage.local.set({
+      portalURL: portalURL,
+      portalEmail: portalEmail
+    });
+    
+    return { success: true, portalURL: portalURL, portalEmail: portalEmail };
+  } catch (error) {
+    console.error('Error updating portal configuration:', error);
+    return { success: false, message: 'Error updating portal configuration' };
+  }
+}
+
+// Update partner portal configuration (URL and email)
+async function updatePartnerPortalConfig(url, email) {
+  try {
+    // Validate URL
+    let partnerPortalURL = url.trim();
+    
+    // Add https:// if not present and URL is not empty
+    if (partnerPortalURL !== '' && !partnerPortalURL.startsWith('http://') && !partnerPortalURL.startsWith('https://')) {
+      partnerPortalURL = 'https://' + partnerPortalURL;
+    }
+    
+    // Validate email
+    const partnerPortalEmail = email.trim();
+    if (partnerPortalEmail !== '' && !isValidEmail(partnerPortalEmail)) {
+      return { success: false, message: 'Invalid email format' };
+    }
+    
+    // Update state in storage
+    chrome.storage.local.set({
+      partnerPortalURL: partnerPortalURL,
+      partnerPortalEmail: partnerPortalEmail
+    });
+    
+    return { 
+      success: true, 
+      partnerPortalURL: partnerPortalURL, 
+      partnerPortalEmail: partnerPortalEmail 
+    };
+  } catch (error) {
+    console.error('Error updating partner portal configuration:', error);
+    return { success: false, message: 'Error updating partner portal configuration' };
+  }
+}
+
+// Email validation function
+function isValidEmail(email) {
+  const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(String(email).toLowerCase());
 }
 
 // Toggle protection state
@@ -306,6 +387,99 @@ function setupPeriodicCheck() {
       }
     }
   }, 10 * 60 * 1000); // 10 minutes
+  
+  // Check partner portal login status (every 10 minutes)
+  setInterval(async () => {
+    const result = await checkPartnerPortalLoginStatus();
+    
+    // If partner portal login status changed, show notification
+    if (result.success) {
+      // Get previous login status
+      const state = await new Promise(resolve => {
+        chrome.storage.local.get(['partnerPortalLoginStatus'], resolve);
+      });
+      
+      // If login status changed from logged in to logged out, show notification
+      if (state.partnerPortalLoginStatus === true && result.loggedIn === false) {
+        showNotification(
+          'Partner Portal Session Expired',
+          'Your partner portal session has expired. Please log in again.'
+        );
+      }
+    }
+  }, 10 * 60 * 1000); // 10 minutes
+}
+
+// Check partner portal login status
+async function checkPartnerPortalLoginStatus() {
+  try {
+    // Get current partner portal URL and email from storage
+    const state = await new Promise(resolve => {
+      chrome.storage.local.get(['partnerPortalURL', 'partnerPortalEmail'], resolve);
+    });
+    
+    const partnerPortalURL = state.partnerPortalURL || defaultState.partnerPortalURL;
+    const partnerPortalEmail = state.partnerPortalEmail || defaultState.partnerPortalEmail;
+    
+    // If no partner portal URL is configured, return false
+    if (!partnerPortalURL || partnerPortalURL.trim() === '') {
+      return { success: true, loggedIn: false, message: 'No partner portal URL configured' };
+    }
+    
+    // If no email is configured, return false
+    if (!partnerPortalEmail || partnerPortalEmail.trim() === '') {
+      return { success: true, loggedIn: false, message: 'No email configured' };
+    }
+    
+    // In a real implementation, we would check the login status by making a request
+    // to the partner portal and checking if the user is authenticated. For this simulation,
+    // we'll just simulate a random login status.
+    const isLoggedIn = Math.random() > 0.3; // 70% chance of being logged in
+    
+    // Update state in storage
+    chrome.storage.local.set({
+      partnerPortalLoginStatus: isLoggedIn,
+      partnerPortalLastChecked: Date.now()
+    });
+    
+    return { 
+      success: true, 
+      loggedIn: isLoggedIn, 
+      message: isLoggedIn ? 'Logged in to partner portal' : 'Not logged in to partner portal'
+    };
+  } catch (error) {
+    console.error('Error checking partner portal login status:', error);
+    return { 
+      success: false, 
+      loggedIn: false, 
+      message: 'Error checking partner portal login status'
+    };
+  }
+}
+
+// Open partner portal in new tab
+async function openPartnerPortal() {
+  try {
+    // Get current partner portal URL from storage
+    const state = await new Promise(resolve => {
+      chrome.storage.local.get(['partnerPortalURL'], resolve);
+    });
+    
+    const partnerPortalURL = state.partnerPortalURL || defaultState.partnerPortalURL;
+    
+    // If no partner portal URL is configured, return error
+    if (!partnerPortalURL || partnerPortalURL.trim() === '') {
+      return { success: false, message: 'No partner portal URL configured' };
+    }
+    
+    // Open partner portal URL in new tab
+    chrome.tabs.create({ url: partnerPortalURL });
+    
+    return { success: true, message: 'Partner portal opened in new tab' };
+  } catch (error) {
+    console.error('Error opening partner portal:', error);
+    return { success: false, message: 'Error opening partner portal' };
+  }
 }
 
 // Handle messages from popup
@@ -334,6 +508,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, loggedIn: false });
       });
     return true; // Keep the message channel open for async response
+  } else if (message.action === 'checkPartnerPortalLogin') {
+    checkPartnerPortalLoginStatus()
+      .then(sendResponse)
+      .catch(error => {
+        console.error('Error in checkPartnerPortalLogin:', error);
+        sendResponse({ success: false, loggedIn: false });
+      });
+    return true; // Keep the message channel open for async response
   } else if (message.action === 'openPortal') {
     openPortal()
       .then(sendResponse)
@@ -342,11 +524,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false });
       });
     return true; // Keep the message channel open for async response
+  } else if (message.action === 'openPartnerPortal') {
+    openPartnerPortal()
+      .then(sendResponse)
+      .catch(error => {
+        console.error('Error in openPartnerPortal:', error);
+        sendResponse({ success: false });
+      });
+    return true; // Keep the message channel open for async response
   } else if (message.action === 'updatePortalURL') {
     updatePortalURL(message.url)
       .then(sendResponse)
       .catch(error => {
         console.error('Error in updatePortalURL:', error);
+        sendResponse({ success: false });
+      });
+    return true; // Keep the message channel open for async response
+  } else if (message.action === 'updatePortalConfig') {
+    updatePortalConfig(message.url, message.email)
+      .then(sendResponse)
+      .catch(error => {
+        console.error('Error in updatePortalConfig:', error);
+        sendResponse({ success: false });
+      });
+    return true; // Keep the message channel open for async response
+  } else if (message.action === 'updatePartnerPortalConfig') {
+    updatePartnerPortalConfig(message.url, message.email)
+      .then(sendResponse)
+      .catch(error => {
+        console.error('Error in updatePartnerPortalConfig:', error);
         sendResponse({ success: false });
       });
     return true; // Keep the message channel open for async response
@@ -365,5 +571,10 @@ refreshStatus().catch(error => {
 // Initial portal login check
 checkPortalLoginStatus().catch(error => {
   console.error('Initial portal login check failed:', error);
+});
+
+// Initial partner portal login check
+checkPartnerPortalLoginStatus().catch(error => {
+  console.error('Initial partner portal login check failed:', error);
 });
 
