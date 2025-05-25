@@ -133,12 +133,65 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+// IP validation functions
+function isValidIPv4(ip) {
+  // Regular expression for IPv4 validation
+  const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (!ipv4Regex.test(ip)) return false;
+  
+  // Check each octet
+  const octets = ip.split('.');
+  return octets.every(octet => {
+    const num = parseInt(octet, 10);
+    return num >= 0 && num <= 255;
+  });
+}
+
+function isValidIPv6(ip) {
+  // Regular expression for IPv6 validation
+  const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^::1$|^([0-9a-fA-F]{1,4}:){1,7}:$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}$|^([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}$|^([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}$|^([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}$|^[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})$|^:((:[0-9a-fA-F]{1,4}){1,7}|:)$/;
+  return ipv6Regex.test(ip);
+}
+
+function validateIP(ip) {
+  if (!ip || ip === 'Not available') return 'Not available';
+  
+  // Remove any surrounding whitespace
+  ip = ip.trim();
+  
+  // Check for IPv4
+  if (isValidIPv4(ip)) {
+    return ip;
+  }
+  
+  // Check for IPv6
+  if (isValidIPv6(ip)) {
+    return ip;
+  }
+  
+  // If neither IPv4 nor IPv6, return error
+  console.error('Invalid IP address:', ip);
+  return 'Invalid IP';
+}
+
+// Add IP format display helper
+function formatIP(ip) {
+  if (!ip || ip === 'Not available' || ip === 'Invalid IP') return ip;
+  
+  // If IPv6, add brackets for better readability
+  if (ip.includes(':')) {
+    return `[${ip}]`;
+  }
+  
+  return ip;
+}
+
 // Function to get public IP
 async function getPublicIP() {
   try {
     const response = await fetch('https://api.ipify.org?format=json');
     const data = await response.json();
-    return data.ip;
+    return validateIP(data.ip);
   } catch (error) {
     console.error('Error fetching public IP:', error);
     return 'Not available';
@@ -166,7 +219,7 @@ function getPrivateIP() {
           const ip = ipMatch[1];
           if (!ip.startsWith('127.') && !ip.startsWith('::1')) {
             rtc.close();
-            resolve(ip);
+            resolve(validateIP(ip));
           }
         }
       };
@@ -197,11 +250,11 @@ async function updateIPAddresses() {
   // Update public IP
   publicIPElement.textContent = 'Loading...';
   const publicIP = await getPublicIP();
-  publicIPElement.textContent = publicIP;
+  publicIPElement.textContent = formatIP(publicIP);
 
   // Update private IP
   privateIPElement.textContent = 'Loading...';
   const privateIP = await getPrivateIP();
-  privateIPElement.textContent = privateIP;
+  privateIPElement.textContent = formatIP(privateIP);
 }
 
