@@ -1,0 +1,14 @@
+{
+  "name": "zscaler-portal-service",
+  "version": "1.0.0",
+  "description": "Backend service for Zscaler portal settings",
+  "main": "portal-service.js",
+  "scripts": {
+    "start": "node portal-service.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "mysql2": "^2.3.3"
+  }
+}

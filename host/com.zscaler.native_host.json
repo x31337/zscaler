@@ -1,0 +1,9 @@
+{
+  "name": "com.zscaler.native_host",
+  "description": "Zscaler Native Messaging Host for IP Detection",
+  "path": "/home/jose.guzman/x/zscaler/host/zscaler_host.py",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://chrome.extension.zscaler/"
+  ]
+}
