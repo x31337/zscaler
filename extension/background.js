@@ -6,7 +6,10 @@ const defaultState = {
   statusType: 'protected',
   cloudName: 'zscaler.net',
   userName: 'User',
-  lastChecked: Date.now()
+  lastChecked: Date.now(),
+  portalURL: 'https://portal.zscaler.net',
+  portalLoginStatus: false,
+  portalLastChecked: null
 };
 
 // Initialize extension state
@@ -110,6 +113,95 @@ function simulateConnectionCheck() {
   });
 }
 
+// Check portal login status
+async function checkPortalLoginStatus() {
+  try {
+    // Get current portal URL from storage
+    const state = await new Promise(resolve => {
+      chrome.storage.local.get(['portalURL'], resolve);
+    });
+    
+    const portalURL = state.portalURL || defaultState.portalURL;
+    
+    // If no portal URL is configured, return false
+    if (!portalURL || portalURL.trim() === '') {
+      return { success: true, loggedIn: false, message: 'No portal URL configured' };
+    }
+    
+    // In a real implementation, we would check the login status by making a request
+    // to the portal and checking if the user is authenticated. For this simulation,
+    // we'll just simulate a random login status.
+    const isLoggedIn = Math.random() > 0.3; // 70% chance of being logged in
+    
+    // Update state in storage
+    chrome.storage.local.set({
+      portalLoginStatus: isLoggedIn,
+      portalLastChecked: Date.now()
+    });
+    
+    return { 
+      success: true, 
+      loggedIn: isLoggedIn, 
+      message: isLoggedIn ? 'Logged in to portal' : 'Not logged in to portal'
+    };
+  } catch (error) {
+    console.error('Error checking portal login status:', error);
+    return { 
+      success: false, 
+      loggedIn: false, 
+      message: 'Error checking portal login status'
+    };
+  }
+}
+
+// Open portal in new tab
+async function openPortal() {
+  try {
+    // Get current portal URL from storage
+    const state = await new Promise(resolve => {
+      chrome.storage.local.get(['portalURL'], resolve);
+    });
+    
+    const portalURL = state.portalURL || defaultState.portalURL;
+    
+    // If no portal URL is configured, return error
+    if (!portalURL || portalURL.trim() === '') {
+      return { success: false, message: 'No portal URL configured' };
+    }
+    
+    // Open portal URL in new tab
+    chrome.tabs.create({ url: portalURL });
+    
+    return { success: true, message: 'Portal opened in new tab' };
+  } catch (error) {
+    console.error('Error opening portal:', error);
+    return { success: false, message: 'Error opening portal' };
+  }
+}
+
+// Update portal URL
+async function updatePortalURL(url) {
+  try {
+    // Validate URL
+    let portalURL = url.trim();
+    
+    // Add https:// if not present and URL is not empty
+    if (portalURL !== '' && !portalURL.startsWith('http://') && !portalURL.startsWith('https://')) {
+      portalURL = 'https://' + portalURL;
+    }
+    
+    // Update state in storage
+    chrome.storage.local.set({
+      portalURL: portalURL
+    });
+    
+    return { success: true, portalURL: portalURL };
+  } catch (error) {
+    console.error('Error updating portal URL:', error);
+    return { success: false, message: 'Error updating portal URL' };
+  }
+}
+
 // Toggle protection state
 async function toggleProtection(enabled) {
   try {
@@ -179,6 +271,7 @@ async function refreshStatus() {
 
 // Set up periodic status check (every 5 minutes)
 function setupPeriodicCheck() {
+  // Check Zscaler protection status
   setInterval(async () => {
     const result = await refreshStatus();
     
@@ -192,6 +285,27 @@ function setupPeriodicCheck() {
       }
     }
   }, 5 * 60 * 1000); // 5 minutes
+  
+  // Check portal login status (every 10 minutes)
+  setInterval(async () => {
+    const result = await checkPortalLoginStatus();
+    
+    // If portal login status changed, show notification
+    if (result.success) {
+      // Get previous login status
+      const state = await new Promise(resolve => {
+        chrome.storage.local.get(['portalLoginStatus'], resolve);
+      });
+      
+      // If login status changed from logged in to logged out, show notification
+      if (state.portalLoginStatus === true && result.loggedIn === false) {
+        showNotification(
+          'Portal Session Expired',
+          'Your portal session has expired. Please log in again.'
+        );
+      }
+    }
+  }, 10 * 60 * 1000); // 10 minutes
 }
 
 // Handle messages from popup
@@ -212,6 +326,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false });
       });
     return true; // Keep the message channel open for async response
+  } else if (message.action === 'checkPortalLogin') {
+    checkPortalLoginStatus()
+      .then(sendResponse)
+      .catch(error => {
+        console.error('Error in checkPortalLogin:', error);
+        sendResponse({ success: false, loggedIn: false });
+      });
+    return true; // Keep the message channel open for async response
+  } else if (message.action === 'openPortal') {
+    openPortal()
+      .then(sendResponse)
+      .catch(error => {
+        console.error('Error in openPortal:', error);
+        sendResponse({ success: false });
+      });
+    return true; // Keep the message channel open for async response
+  } else if (message.action === 'updatePortalURL') {
+    updatePortalURL(message.url)
+      .then(sendResponse)
+      .catch(error => {
+        console.error('Error in updatePortalURL:', error);
+        sendResponse({ success: false });
+      });
+    return true; // Keep the message channel open for async response
   }
 });
 
@@ -222,5 +360,10 @@ setupPeriodicCheck();
 // Initial status check
 refreshStatus().catch(error => {
   console.error('Initial status check failed:', error);
+});
+
+// Initial portal login check
+checkPortalLoginStatus().catch(error => {
+  console.error('Initial portal login check failed:', error);
 });
 

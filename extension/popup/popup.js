@@ -1,6 +1,6 @@
 // Zscaler Chrome Extension - Popup Script
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
   // Get UI elements
   const statusIcon = document.getElementById('statusIcon');
   const statusText = document.getElementById('statusText');
@@ -10,47 +10,74 @@ document.addEventListener('DOMContentLoaded', function() {
   const cloudName = document.getElementById('cloudName');
   const userName = document.getElementById('userName');
   
+  // Portal UI elements
+  const portalStatusDot = document.getElementById('portalStatusDot');
+  const portalStatusText = document.getElementById('portalStatusText');
+  const portalLoginBtn = document.getElementById('portalLoginBtn');
+  const portalURLInput = document.getElementById('portalURL');
+  const savePortalURLBtn = document.getElementById('savePortalURL');
+  
   // Initialize popup with current state
-  initializePopup();
+  await initializePopup();
   
   // Add event listeners
   protectionToggle.addEventListener('change', toggleProtection);
   refreshBtn.addEventListener('click', refreshStatus);
+  portalLoginBtn.addEventListener('click', openPortal);
+  savePortalURLBtn.addEventListener('click', savePortalURL);
   
   // Function to initialize popup with current state
-  function initializePopup() {
-    chrome.storage.local.get(['protectionEnabled', 'statusType', 'cloudName', 'userName'], function(result) {
-      const enabled = result.protectionEnabled !== undefined ? result.protectionEnabled : true;
-      const status = result.statusType || 'protected';
-      
-      updateUI(enabled, status);
-      
-      // Set toggle state
-      protectionToggle.checked = enabled;
-      
-      // Set cloud and user info
-      if (result.cloudName) {
-        cloudName.textContent = result.cloudName;
-      }
-      
-      if (result.userName) {
-        userName.textContent = result.userName;
-      }
-      
-      // Update IP addresses
-      updateIPAddresses();
+  async function initializePopup() {
+    // Get storage data using Promise
+    const result = await new Promise(resolve => {
+      chrome.storage.local.get(['protectionEnabled', 'statusType', 'cloudName', 'userName', 'portalURL', 'portalLoginStatus'], resolve);
     });
+      
+    const enabled = result.protectionEnabled !== undefined ? result.protectionEnabled : true;
+    const status = result.statusType || 'protected';
+    
+    updateUI(enabled, status);
+    
+    // Set toggle state
+    protectionToggle.checked = enabled;
+    
+    // Set cloud and user info
+    if (result.cloudName) {
+      cloudName.textContent = result.cloudName;
+    }
+    
+    if (result.userName) {
+      userName.textContent = result.userName;
+    }
+    
+    // Update portal UI
+    if (result.portalURL) {
+      portalURLInput.value = result.portalURL;
+    }
+    
+    // Update portal status
+    updatePortalStatusUI(result.portalLoginStatus || false);
+    
+    // Update IP addresses
+    await updateIPAddresses();
+    
+    // Check portal login status
+    await checkPortalStatus();
   }
   
   // Function to toggle protection
-  function toggleProtection() {
+  async function toggleProtection() {
     const enabled = protectionToggle.checked;
     
-    // Send message to background script
-    chrome.runtime.sendMessage({
-      action: 'toggleProtection',
-      enabled: enabled
-    }, function(response) {
+    try {
+      // Send message to background script and wait for response
+      const response = await new Promise(resolve => {
+        chrome.runtime.sendMessage({
+          action: 'toggleProtection',
+          enabled: enabled
+        }, resolve);
+      });
+      
       if (response && response.success) {
         updateUI(enabled, response.statusType);
       } else {
@@ -59,7 +86,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Revert toggle if operation failed
         protectionToggle.checked = !enabled;
       }
-    });
+    } catch (error) {
+      console.error('Error toggling protection:', error);
+      // Revert toggle on error
+      protectionToggle.checked = !enabled;
+    }
   }
   
   // Function to refresh status
@@ -84,6 +115,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update IP addresses
         await updateIPAddresses();
+        
+        // Check portal status
+        await checkPortalStatus();
       } else {
         // Handle error
         console.error('Failed to refresh status');
@@ -256,5 +290,120 @@ async function updateIPAddresses() {
   privateIPElement.textContent = 'Loading...';
   const privateIP = await getPrivateIP();
   privateIPElement.textContent = formatIP(privateIP);
+}
+
+// Portal-related functions
+
+// Open company portal in new tab
+async function openPortal() {
+  try {
+    // Disable button temporarily
+    portalLoginBtn.disabled = true;
+    portalLoginBtn.textContent = 'Opening...';
+    
+    // Send message to background script
+    const response = await new Promise(resolve => {
+      chrome.runtime.sendMessage({
+        action: 'openPortal'
+      }, resolve);
+    });
+    
+    if (!response || !response.success) {
+      // Handle error
+      portalStatusText.textContent = response ? response.message : 'Failed to open portal';
+      console.error('Failed to open portal:', response ? response.message : 'Unknown error');
+    }
+  } catch (error) {
+    console.error('Error opening portal:', error);
+    portalStatusText.textContent = 'Error opening portal';
+  } finally {
+    // Re-enable button
+    portalLoginBtn.disabled = false;
+    portalLoginBtn.textContent = 'Open Portal';
+  }
+}
+
+// Save portal URL
+async function savePortalURL() {
+  try {
+    const url = portalURLInput.value;
+    
+    // Disable button temporarily
+    savePortalURLBtn.disabled = true;
+    savePortalURLBtn.textContent = 'Saving...';
+    
+    // Send message to background script
+    const response = await new Promise(resolve => {
+      chrome.runtime.sendMessage({
+        action: 'updatePortalURL',
+        url: url
+      }, resolve);
+    });
+    
+    if (response && response.success) {
+      // Update input with formatted URL if returned
+      if (response.portalURL) {
+        portalURLInput.value = response.portalURL;
+      }
+      
+      // Update status
+      portalStatusText.textContent = 'URL saved successfully';
+      
+      // Check portal status after URL update
+      await checkPortalStatus();
+    } else {
+      // Handle error
+      portalStatusText.textContent = response ? response.message : 'Failed to save URL';
+      console.error('Failed to save portal URL:', response ? response.message : 'Unknown error');
+    }
+  } catch (error) {
+    console.error('Error saving portal URL:', error);
+    portalStatusText.textContent = 'Error saving URL';
+  } finally {
+    // Re-enable button
+    savePortalURLBtn.disabled = false;
+    savePortalURLBtn.textContent = 'Save';
+  }
+}
+
+// Check portal login status
+async function checkPortalStatus() {
+  try {
+    // Update UI to show checking
+    portalStatusDot.className = 'status-dot';
+    portalStatusText.textContent = 'Checking portal status...';
+    
+    // Send message to background script
+    const response = await new Promise(resolve => {
+      chrome.runtime.sendMessage({
+        action: 'checkPortalLogin'
+      }, resolve);
+    });
+    
+    if (response && response.success) {
+      // Update UI based on login status
+      updatePortalStatusUI(response.loggedIn);
+    } else {
+      // Handle error
+      portalStatusDot.className = 'status-dot';
+      portalStatusText.textContent = response ? response.message : 'Failed to check portal status';
+      console.error('Failed to check portal status:', response ? response.message : 'Unknown error');
+    }
+  } catch (error) {
+    console.error('Error checking portal status:', error);
+    portalStatusDot.className = 'status-dot';
+    portalStatusText.textContent = 'Error checking portal status';
+  }
+}
+
+// Update portal status UI
+function updatePortalStatusUI(isLoggedIn) {
+  if (isLoggedIn) {
+    portalStatusDot.className = 'status-dot connected';
+    portalStatusText.textContent = 'Connected to portal';
+  } else {
+    portalStatusDot.className = 'status-dot disconnected';
+    portalStatusText.textContent = 'Not connected to portal';
+  }
 }
 
