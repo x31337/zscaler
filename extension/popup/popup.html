@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zscaler Internet Security</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="../icons/ZscalerAppSplash.png" alt="Zscaler Logo" class="logo">
+      <h1>Zscaler Security</h1>
+    </div>
+    
+    <div class="status-container">
+      <div class="status-icon">
+        <img id="statusIcon" src="../icons/icon-enabled-48.png" alt="Status">
+      </div>
+      <div class="status-text">
+        <h2>Status: <span id="statusText">Protected</span></h2>
+        <p id="statusDescription">Traffic protected by Zscaler</p>
+      </div>
+    </div>
+    
+    <div class="toggle-container">
+      <div class="toggle-label">Zscaler Protection</div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="protectionToggle" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    
+    <div class="info-container">
+      <div class="info-row">
+        <div class="info-label">Cloud:</div>
+        <div class="info-value" id="cloudName">zscaler.net</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">User:</div>
+        <div class="info-value" id="userName">User</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">Version:</div>
+        <div class="info-value">1.0.0</div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <button id="refreshBtn" class="btn">Refresh Status</button>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
+
