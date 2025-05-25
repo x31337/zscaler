@@ -36,6 +36,9 @@ document.addEventListener('DOMContentLoaded', function() {
       if (result.userName) {
         userName.textContent = result.userName;
       }
+      
+      // Update IP addresses
+      updateIPAddresses();
     });
   }
   
@@ -60,29 +63,38 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Function to refresh status
-  function refreshStatus() {
+  async function refreshStatus() {
     // Disable refresh button temporarily
     refreshBtn.disabled = true;
     refreshBtn.textContent = 'Refreshing...';
     
-    // Send message to background script
-    chrome.runtime.sendMessage({
-      action: 'refreshStatus'
-    }, function(response) {
+    try {
+      // Send message to background script and wait for response
+      const response = await new Promise(resolve => {
+        chrome.runtime.sendMessage({
+          action: 'refreshStatus'
+        }, resolve);
+      });
+
       if (response && response.success) {
         updateUI(response.enabled, response.statusType);
         
         // Update toggle state
         protectionToggle.checked = response.enabled;
+        
+        // Update IP addresses
+        await updateIPAddresses();
       } else {
         // Handle error
         console.error('Failed to refresh status');
       }
-      
+    } catch (error) {
+      console.error('Error refreshing status:', error);
+    } finally {
       // Re-enable refresh button
       refreshBtn.disabled = false;
       refreshBtn.textContent = 'Refresh Status';
-    });
+    }
   }
   
   // Function to update UI based on state
@@ -120,4 +132,76 @@ document.addEventListener('DOMContentLoaded', function() {
       'status-disabled';
   }
 });
+
+// Function to get public IP
+async function getPublicIP() {
+  try {
+    const response = await fetch('https://api.ipify.org?format=json');
+    const data = await response.json();
+    return data.ip;
+  } catch (error) {
+    console.error('Error fetching public IP:', error);
+    return 'Not available';
+  }
+}
+
+// Function to get private IP using WebRTC
+function getPrivateIP() {
+  return new Promise((resolve) => {
+    try {
+      // Create RTCPeerConnection
+      const rtc = new RTCPeerConnection({
+        iceServers: []
+      });
+
+      // Listen for candidate events
+      rtc.onicecandidate = (event) => {
+        if (!event.candidate) return;
+
+        // Extract IP from candidate string
+        const ipMatch = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/g
+          .exec(event.candidate.candidate);
+
+        if (ipMatch && ipMatch[1]) {
+          const ip = ipMatch[1];
+          if (!ip.startsWith('127.') && !ip.startsWith('::1')) {
+            rtc.close();
+            resolve(ip);
+          }
+        }
+      };
+
+      // Create data channel and offer to trigger candidates
+      rtc.createDataChannel('');
+      rtc.createOffer()
+        .then(offer => rtc.setLocalDescription(offer))
+        .catch(() => resolve('Not available'));
+
+      // Set timeout in case no viable candidates are found
+      setTimeout(() => {
+        rtc.close();
+        resolve('Not available');
+      }, 5000);
+    } catch (error) {
+      console.error('Error getting private IP:', error);
+      resolve('Not available');
+    }
+  });
+}
+
+// Function to update IP addresses
+async function updateIPAddresses() {
+  const publicIPElement = document.getElementById('publicIP');
+  const privateIPElement = document.getElementById('privateIP');
+
+  // Update public IP
+  publicIPElement.textContent = 'Loading...';
+  const publicIP = await getPublicIP();
+  publicIPElement.textContent = publicIP;
+
+  // Update private IP
+  privateIPElement.textContent = 'Loading...';
+  const privateIP = await getPrivateIP();
+  privateIPElement.textContent = privateIP;
+}
 
