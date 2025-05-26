@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: zscaler_mysql_dev
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: zscaler
+      MYSQL_DATABASE: zscaler_extension
+      TZ: UTC
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data_dev:/var/lib/mysql
+      - ../../server/docker/mysql/init:/docker-entrypoint-initdb.d
+    networks:
+      - zscaler_dev
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pzscaler"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  server:
+    build:
+      context: ../../server
+      dockerfile: Dockerfile
+      target: development
+    container_name: zscaler_server_dev
+    volumes:
+      - ../../server:/app
+      - /app/node_modules
+      - ../../server/logs:/app/logs
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # Debug port
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=zscaler
+      - DB_NAME=zscaler_extension
+      - TZ=UTC
+      - DEBUG=zscaler:*
+    networks:
+      - zscaler_dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: npm run dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  zscaler_dev:
+    name: zscaler_dev
+
+volumes:
+  mysql_data_dev:
+    name: zscaler_mysql_dev

@@ -1,0 +1,1008 @@
+/* Container */
+.container {
+  min-width: 360px;
+  max-width: 400px;
+  background: white;
+}
+
+/* Header */
+.header {
+  height: 42px;
+  padding: 0 8px;
+  background: linear-gradient(to right, #0074d4, #0066bb);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  height: 100%;
+  max-width: 42px;
+  margin-right: 2px;
+  justify-content: center;
+}
+
+.logo {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+  opacity: 1;
+}
+
+.header-status {
+  flex: 1;
+  min-width: 180px;
+  padding-left: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.status-text {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+  color: white;
+}
+
+.status-description {
+  font-size: 11px;
+  opacity: 0.9;
+  letter-spacing: 0.2px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.3);
+  transition: .3s;
+  border-radius: 20px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #4CAF50;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(16px);
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+}
+
+.info-label {
+  color: #666;
+  font-size: 11px;
+  font-weight: 500;
+  min-width: 60px;
+}
+
+.info-value {
+  font-size: 12px;
+  color: #333;
+  flex: 1;
+}
+
+.info-value.mono {
+  font-family: 'Consolas', monospace;
+  font-size: 11px;
+}
+
+/* Portal Container */
+.portal-container {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.portal-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.portal-input {
+  flex: 1;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.portal-input:focus {
+  border-color: #0074d4;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 116, 212, 0.1);
+}
+
+.portal-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* Status Indicators */
+.portal-status-indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #555;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.connected {
+  background-color: #4CAF50;
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.4);
+}
+
+.status-dot.disconnected {
+  background-color: #F44336;
+  box-shadow: 0 0 4px rgba(244, 67, 54, 0.4);
+}
+
+/* Buttons */
+.btn {
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: #0074d4;
+  color: white;
+}
+
+.btn-small {
+  font-size: 11px;
+  padding: 0 8px;
+  height: 28px;
+  min-width: 60px;
+  letter-spacing: 0.2px;
+}
+
+.btn.secondary {
+  background-color: transparent;
+  border: 1px solid #0074d4;
+  color: #0074d4;
+}
+
+.btn:hover {
+  background-color: #0066bb;
+}
+
+.btn.secondary:hover {
+  background-color: rgba(0, 116, 212, 0.1);
+}
+
+/* Footer */
+.footer {
+  padding: 8px;
+  border-top: 1px solid #eee;
+  text-align: right;
+}
+
+/* Main container */
+body {
+  width: 360px;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  color: #333;
+  background-color: #fff;
+}
+
+.container {
+  padding: 10px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 18px;
+  color: #0078d7;
+}
+
+/* Status container */
+.status-container {
+  display: flex;
+  align-items: center;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 15px;
+}
+
+.status-icon {
+  margin-right: 15px;
+}
+
+.status-icon img {
+  width: 48px;
+  height: 48px;
+}
+
+.status-text h2 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+}
+
+.status-text p {
+  margin: 0;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Toggle container */
+.toggle-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.toggle-label {
+  font-weight: bold;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 20px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #0078d7;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* Info container */
+.info-container {
+  margin-bottom: 15px;
+}
+
+.info-row {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-label {
+  flex: 0 0 100px;
+  font-weight: bold;
+}
+
+.info-value {
+  flex: 1;
+}
+
+/* Button styles */
+.btn {
+  background-color: #0078d7;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-color: #0063b1;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+/* Status specific colors */
+.status-protected {
+  color: #333;
+}
+
+.status-alert {
+  color: #333;
+}
+
+.status-error {
+  color: #333;
+}
+
+.status-disabled {
+  color: #333;
+}
+
+/* IP categories styling */
+.ip-section-title {
+  font-weight: bold;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #e0e0e0;
+  color: #333;
+}
+
+.ip-category {
+  display: flex;
+  padding: 6px 0;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ip-category:last-child {
+  border-bottom: none;
+}
+
+.ip-category-label {
+  flex: 0 0 120px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.ip-category-label.docker {
+  color: #2496ED; /* Docker blue */
+}
+
+.ip-category-label.non-private {
+  color: #4CAF50; /* Green */
+}
+
+.ip-category-label.private {
+  color: #FF9800; /* Orange */
+}
+
+.ip-category-value {
+  flex: 1;
+  font-family: monospace;
+}
+
+/* Add color dots before labels */
+.ip-category-label:before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.ip-category-label.docker:before {
+  background-color: #2496ED; /* Docker blue */
+}
+
+.ip-category-label.non-private:before {
+  background-color: #4CAF50; /* Green */
+}
+
+.ip-category-label.private:before {
+  background-color: #FF9800; /* Orange */
+}
+
+/* IP category styles */
+.ip-section-title {
+  margin-top: 16px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e0e0e0;
+  color: #333;
+  letter-spacing: 0.2px;
+}
+
+.ip-category {
+  display: flex;
+  padding: 8px 0;
+  align-items: center;
+}
+
+.ip-category-label {
+  flex: 0 0 120px;
+  font-weight: 500;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+.ip-category-label::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.ip-category-label.docker::before {
+  background-color: #2496ED; /* Docker blue */
+}
+
+.ip-category-label.non-private::before {
+  background-color: #4CAF50; /* Green */
+}
+
+.ip-category-label.private::before {
+  background-color: #FF9800; /* Orange */
+}
+
+.ip-category-value {
+  flex: 1;
+  font-size: 12px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+
+/* Zscaler Chrome Extension Popup Styles */
+html {
+  min-width: 300px;  /* Chrome's recommended minimum */
+  min-height: 300px;  /* Chrome's recommended minimum */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.4;
+  letter-spacing: 0.2px;
+}
+
+body {
+  background-color: #f5f7fa;
+  color: #333;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;  /* Prevent scrolling */
+  min-width: 300px;  /* Match HTML min-width */
+  min-height: 300px;  /* Match HTML min-height */
+  font-size: 13px;  /* Set base font size */
+}
+
+.container {
+  width: 100%;  /* Fill available space */
+  min-width: 300px;  /* Match HTML min-width */
+  max-width: 420px;  /* Maximum width */
+  min-height: 300px;  /* Match HTML min-height */
+  max-height: 500px;  /* Maximum height */
+  padding: 0;  /* Remove bottom padding to use space better */
+  margin: 0;   /* Remove margin since we're using 100% width */
+  background-color: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Styles */
+.header {
+  background-color: #0074d4;
+  color: white;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  height: 48px;
+  gap: 8px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  height: 100%;
+  max-width: 48px;
+  justify-content: center;
+}
+
+.header h1 {
+  display: none; /* Hide redundant title */
+}
+
+.header h1::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  height: 16px;
+  width: 1px;
+  background-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-50%);
+  opacity: 0.3;
+}
+
+.logo {
+  height: 36px;
+  width: 36px;
+  padding: 0;
+  flex-shrink: 0;
+  opacity: 1;
+  object-fit: contain;
+}
+
+/* Status Container Styles */
+/* Status section */
+.header-status {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding-left: 6px;
+  flex: 1;
+  min-width: 260px;
+  max-width: 75%;
+}
+
+.status-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+
+.header-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  height: 24px; /* Fixed height for better alignment */
+  margin-left: auto;
+  padding-left: 10px;
+  min-width: 44px;
+}
+
+/* Status icon removed */
+
+.status-text {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: white;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 250px;
+  flex: 1;
+  margin-top: 0;
+  padding-left: 30px;
+  letter-spacing: 0.4px;
+}
+
+.status-description {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.98;
+  line-height: 1.2;
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.status-protected .status-description::before {
+  content: "Protection active";
+}
+
+.status-disabled .status-description::before {
+  content: "Disabled";
+}
+
+.status-error .status-description::before {
+  content: "Check";
+}
+
+/* Toggle Switch Styles */
+.toggle-container {
+  display: none; /* Hide the original toggle container */
+}
+
+.toggle-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px; /* Slightly wider for better visibility */
+  height: 22px; /* Slightly taller to match header height better */
+  margin-right: 4px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.25);
+  transition: all 0.3s ease-in-out; /* Smoother transition */
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Default state - disconnected (red) */
+.status-disabled .toggle-slider {
+  background-color: rgba(255, 79, 79, 0.25);
+  border-color: rgba(255, 79, 79, 0.8);
+  box-shadow: 0 0 5px rgba(255, 79, 79, 0.3);
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px; /* Slightly larger circle */
+  width: 18px;
+  left: 2px;
+  bottom: 1px;
+  background-color: white;
+  transition: all 0.3s ease-in-out; /* Smoother transition */
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Red indicator for disabled state */
+.status-disabled .toggle-slider:before {
+  background-color: #ff4f4f; /* Red dot */
+}
+
+input:checked + .toggle-slider {
+  background-color: rgba(255, 255, 255, 1); /* Full white for more contrast */
+  border-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4); /* Subtle glow effect */
+}
+
+/* Connected state (green) */
+.status-protected input:checked + .toggle-slider {
+  background-color: rgba(40, 200, 100, 0.95); /* Green background */
+  border-color: rgba(40, 200, 100, 1);
+  box-shadow: 0 0 10px rgba(40, 200, 100, 0.5); /* Green glow */
+}
+
+input:focus + .toggle-slider {
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+  outline: none;
+}
+
+/* Focus state for protected/connected */
+.status-protected input:focus + .toggle-slider {
+  box-shadow: 0 0 8px rgba(40, 200, 100, 0.8);
+}
+
+/* Focus state for disabled */
+.status-disabled input:focus + .toggle-slider {
+  box-shadow: 0 0 8px rgba(255, 79, 79, 0.8);
+}
+
+/* Focus state for error */
+.status-error input:focus + .toggle-slider {
+  box-shadow: 0 0 8px rgba(255, 79, 79, 0.8);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(22px); /* Adjusted for wider toggle */
+  background-color: #0066c0; /* Darker blue for more contrast against white background */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Connected state (green) toggle dot */
+.status-protected input:checked + .toggle-slider:before {
+  background-color: white; /* White dot on green background */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* Error state red toggle */
+.status-error input:checked + .toggle-slider {
+  background-color: rgba(255, 79, 79, 0.95); /* Red background */
+  border-color: rgba(255, 79, 79, 1);
+  box-shadow: 0 0 10px rgba(255, 79, 79, 0.5); /* Red glow */
+}
+
+/* Error state toggle dot */
+.status-error input:checked + .toggle-slider:before {
+  background-color: white; /* White dot on red background */
+}
+
+/* Info Container Styles */
+.info-container {
+  padding: 10px 16px 8px;
+  border-bottom: 1px solid #e0e0e0;
+  flex-grow: 1;
+  background-color: #fcfcfc;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 10px;
+  line-height: 1.8;
+}
+
+.info-label {
+  width: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  letter-spacing: 0.2px;
+}
+
+.info-value {
+  font-size: 13px;
+  flex: 1;
+  color: #2c2c2c;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+}
+
+/* Footer Styles */
+.footer {
+  padding: 8px 16px;
+  display: flex;
+  justify-content: center;
+  background-color: #f8fafd;
+  border-top: 1px solid #e8e8e8;
+}
+
+.btn {
+  background-color: #0074d4;
+  color: white;
+  border: none;
+  min-height: 28px;
+  padding: 0 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  margin: 4px 0;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+  letter-spacing: 0.3px;
+  line-height: 1.4;
+}
+
+.btn-small {
+  min-height: 22px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.btn:hover {
+  background-color: #005bb1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* Status Colors */
+.status-protected #statusText {
+  color: #ffffff;
+  text-shadow: 0 0 22px rgba(255, 255, 255, 0.95);
+  position: relative;
+  padding-left: 0;
+}
+
+.status-protected #statusText::before {
+  content: "•";
+  position: absolute;
+  left: -26px;
+  top: 45%;
+  transform: translateY(-50%);
+  color: #4CAF50;
+  font-size: 28px;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.95);
+}
+
+.status-protected #statusText::after {
+  content: "Ready";
+}
+
+.status-disabled #statusText {
+  color: #ffcccc; /* Lighter red for better visibility against blue */
+  text-shadow: 0 0 22px rgba(255, 204, 204, 0.95);
+  position: relative;
+  padding-left: 0;
+}
+
+.status-disabled #statusText::before {
+  content: "•";
+  position: absolute;
+  left: -26px;
+  top: 45%;
+  transform: translateY(-50%);
+  color: #F44336;
+  font-size: 28px;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.95);
+}
+
+.status-disabled #statusText::after {
+  content: "Off";
+}
+
+.status-error #statusText {
+  color: #ffcccc; /* Lighter red for better visibility against blue */
+  text-shadow: 0 0 22px rgba(255, 204, 204, 0.95);
+  position: relative;
+  padding-left: 0;
+}
+
+.status-error #statusText::before {
+  content: "•";
+  position: absolute;
+  left: -26px;
+  top: 45%;
+  transform: translateY(-50%);
+  color: #F44336;
+  font-size: 28px;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.95);
+}
+
+.status-error #statusText::after {
+  content: "Error";
+}
+
+/* Add pulsing effect for error state */
+@keyframes pulse-error {
+  0% { box-shadow: 0 0 0 0 rgba(255, 79, 79, 0.4); }
+  70% { box-shadow: 0 0 0 5px rgba(255, 79, 79, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 79, 79, 0); }
+}
+
+.status-error .toggle-slider {
+  animation: pulse-error 2s infinite;
+}
+
+/* Add subtle pulse for connected state */
+@keyframes pulse-connected {
+  0% { box-shadow: 0 0 0 0 rgba(40, 200, 100, 0.4); }
+  70% { box-shadow: 0 0 0 4px rgba(40, 200, 100, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(40, 200, 100, 0); }
+}
+
+.status-protected input:checked + .toggle-slider {
+  animation: pulse-connected 3s infinite;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 420px) {
+  .container {
+    width: 100%;
+  }
+}
+

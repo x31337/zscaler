@@ -3,184 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zscaler Internet Security</title>
+  <title>Zscaler Security</title>
   <link rel="stylesheet" href="popup.css">
-  <style>
-    /* Header styles */
-    .header {
-      height: 42px;
-      padding: 8px;
-      background-color: #0074d4;
-      display: flex;
-      align-items: center;
-    }
-
-    .header-left {
-      max-width: 42px;
-      height: 42px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .logo {
-      height: 38px;
-      width: 38px;
-      padding: 2px;
-      object-fit: contain;
-    }
-
-    .header-status {
-      flex: 1;
-      min-width: 180px;
-      padding-left: 8px;
-    }
-
-    .status-text {
-      font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 0.3px;
-      line-height: 1.3;
-      color: white;
-    }
-
-    .status-description {
-      font-size: 11px;
-      opacity: 0.9;
-      letter-spacing: 0.2px;
-      color: rgba(255, 255, 255, 0.9);
-    }
-
-    /* Portal section styling */
-    .portal-container {
-      padding: 10px 16px;
-      border-top: 1px solid #e0e0e0;
-      margin-bottom: 6px;
-    }
-
-    .portal-container h3 {
-      margin: 0 0 8px 0;
-      font-size: 12px;
-      font-weight: 600;
-      color: #444;
-      letter-spacing: 0.3px;
-    }
-
-    .portal-section {
-      background-color: #f8f9fa;
-      border-radius: 4px;
-      padding: 8px;
-      margin-bottom: 6px;
-      border: 1px solid #eee;
-    }
-
-    .portal-status {
-      margin-bottom: 6px;
-    }
-
-    .status-indicator {
-      display: flex;
-      align-items: center;
-      font-size: 11px;
-      color: #555;
-      letter-spacing: 0.3px;
-    }
-
-    .status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      margin-right: 6px;
-      display: inline-block;
-    }
-
-    .status-dot.connected {
-      background-color: #4CAF50;
-      box-shadow: 0 0 4px rgba(76, 175, 80, 0.4);
-    }
-
-    .status-dot.disconnected {
-      background-color: #F44336;
-      box-shadow: 0 0 4px rgba(244, 67, 54, 0.4);
-    }
-
-    .config-row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-
-    .config-row label {
-      flex: 0 0 65px;
-      font-size: 11px;
-      font-weight: 500;
-      color: #666;
-    }
-
-    .config-row input,
-    .portal-input {
-      flex: 1;
-      width: 100%;
-      padding: 6px 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 12px;
-      letter-spacing: 0.2px;
-      transition: all 0.2s ease;
-    }
-
-    .config-row input:focus,
-    .portal-input:focus {
-      border-color: #0074d4;
-      outline: none;
-      box-shadow: 0 0 0 2px rgba(0, 116, 212, 0.1);
-    }
-
-    .config-actions {
-      display: flex;
-      gap: 4px;
-      justify-content: flex-end;
-      margin-top: 6px;
-    }
-
-    .btn-small {
-      font-size: 11px;
-      padding: 3px 8px;
-      min-width: 50px;
-      letter-spacing: 0.2px;
-      font-weight: 500;
-      height: 22px;
-      line-height: 16px;
-    }
-
-    .btn.secondary {
-      background-color: transparent;
-      border: 1px solid #0074d4;
-      color: #0074d4;
-    }
-
-    .btn.secondary:hover {
-      background-color: rgba(0, 116, 212, 0.1);
-    }
-  </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <!-- Simplified header-left with just the logo -->
       <div class="header-left">
         <img src="../icons/ZscalerAppSplash.png" alt="Z" class="logo">
       </div>
-      
-      <!-- Status section with more direct structure -->
       <div class="header-status">
         <div class="status-text">
           <span id="statusText"></span>
           <span id="statusDescription" class="status-description"></span>
         </div>
       </div>
-      
-      <!-- Toggle switch -->
       <div class="header-toggle">
         <label class="toggle-switch">
           <input type="checkbox" id="protectionToggle" checked>
@@ -188,84 +25,81 @@
         </label>
       </div>
     </div>
-    
-    <div class="info-container">
-      <div class="info-row">
-        <div class="info-label">Cloud:</div>
-        <div class="info-value" id="cloudName">zscaler.net</div>
-      </div>
-      
-      <!-- IP Section - simplified labels -->
-      <div class="ip-section-title">Network</div>
-      
-      <div class="ip-category">
-        <div class="ip-category-label docker">Container:</div>
-        <div class="ip-category-value" id="dockerIP">Loading...</div>
-      </div>
-      
-      <div class="ip-category">
-        <div class="ip-category-label non-private">Public:</div>
-        <div class="ip-category-value" id="nonPrivateIP">Loading...</div>
-      </div>
-      
-      <div class="ip-category">
-        <div class="ip-category-label private">Local:</div>
-        <div class="ip-category-value" id="privateIP">Loading...</div>
-      </div>
-      
-      <div class="info-row">
-        <div class="info-label">Build:</div>
-        <div class="info-value">1.0.0</div>
-      </div>
-    </div>
-    
-    <div class="portal-container">
-      <h3>Authentication</h3>
-      
-      <div class="portal-section">
-        <div class="portal-status">
-          <div class="status-indicator">
-            <span id="portalStatusDot" class="status-dot"></span>
-            <span id="portalStatusText">Enter email to configure</span>
+
+    <div class="network-smart-cards">
+      <div class="cards-container">
+        <div class="network-header">
+          <span class="network-title">Network Status</span>
+          <span class="update-badge" id="lastUpdateTime">Now</span>
+        </div>
+        <div class="card-slider">
+          <div class="network-card" data-card="public">
+            <div class="card-header">
+              <div class="header-icon" title="Public IP">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-.61.08-1.21.21-1.78L8.99 15v1c0 1.1.9 2 2 2v1.93C7.06 19.43 4 16.07 4 12zm13.89 5.4c-.26-.81-1-1.4-1.9-1.4h-1v-3c0-.55-.45-1-1-1h-6v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41C17.92 5.77 20 8.65 20 12c0 2.08-.81 3.98-2.11 5.4z" fill="currentColor"/>
+                </svg>
+              </div>
+              <span class="ip-address" id="publicIP">Loading...</span>
+            </div>
+          </div>
+          
+          <div class="network-card" data-card="docker">
+            <div class="card-header">
+              <div class="header-icon" title="Docker Network">
+                <svg viewBox="0 0 24 24">
+                  <path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor"/>
+                </svg>
+              </div>
+              <span class="ip-address" id="dockerIP">Loading...</span>
+            </div>
+          </div>
+          
+          <div class="network-card" data-card="non-private">
+            <div class="card-header">
+              <div class="header-icon" title="External Network">
+                <svg viewBox="0 0 24 24">
+                  <path d="M17 16l-4-4V8.82C14.16 8.4 15 7.3 15 6c0-1.66-1.34-3-3-3S9 4.34 9 6c0 1.3.84 2.4 2 2.82V12l-4 4H3v5h5v-3.05l4-4.2 4 4.2V21h5v-5h-4z" fill="currentColor"/>
+                </svg>
+              </div>
+              <span class="ip-address" id="nonPrivateIP">Loading...</span>
+            </div>
+          </div>
+          
+          <div class="network-card" data-card="private">
+            <div class="card-header">
+              <div class="header-icon" title="Local Network">
+                <svg viewBox="0 0 24 24">
+                  <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="currentColor"/>
+                </svg>
+              </div>
+              <span class="ip-address" id="privateIP">Loading...</span>
+            </div>
           </div>
         </div>
         
-        <div class="portal-config">
-          <div class="config-row">
-            <input type="email" id="portalEmail" placeholder="Enter corporate email" class="portal-input full-width">
-          </div>
-          <div class="config-actions">
-            <button id="savePortalConfig" class="btn btn-small">Configure</button>
-            <button id="portalLoginBtn" class="btn btn-small secondary">Access</button>
-          </div>
-        </div>
-      </div>
-      
-      <div class="portal-section" style="margin-top: 8px;">
-        <div class="portal-status">
-          <div class="status-indicator">
-            <span id="partnerPortalStatusDot" class="status-dot"></span>
-            <span id="partnerPortalStatusText">Enter email to configure</span>
-          </div>
-        </div>
-        
-        <div class="portal-config">
-          <div class="config-row">
-            <input type="email" id="partnerPortalEmail" placeholder="Enter partner email" class="portal-input full-width">
-          </div>
-          <div class="config-actions">
-            <button id="savePartnerPortalConfig" class="btn btn-small">Configure</button>
-            <button id="partnerPortalLoginBtn" class="btn btn-small secondary">Access</button>
-          </div>
+        <div class="slider-nav">
+          <span class="nav-dot active" data-slide="0"></span>
+          <span class="nav-dot" data-slide="1"></span>
+          <span class="nav-dot" data-slide="2"></span>
+          <span class="nav-dot" data-slide="3"></span>
         </div>
       </div>
     </div>
 
-    <div class="footer">
-      <button id="refreshBtn" class="btn">Refresh</button>
+    <div class="portal-container">
+      <div class="portal-row">
+        <input type="email" id="companyEmail" placeholder="Corporate email" class="portal-input">
+        <button id="saveCompanyPortal" class="btn btn-small">Save</button>
+        <button id="openCompanyPortal" class="btn btn-small secondary">Access</button>
+      </div>
+      <div class="portal-row">
+        <input type="email" id="partnerEmail" placeholder="Partner email" class="portal-input">
+        <button id="savePartnerPortal" class="btn btn-small">Save</button>
+        <button id="openPartnerPortal" class="btn btn-small secondary">Access</button>
+      </div>
     </div>
   </div>
-  
   <script src="popup.js"></script>
 </body>
 </html>

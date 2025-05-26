@@ -1,0 +1,105 @@
+name: Extension CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'extension/**'
+      - '.github/workflows/extension.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'extension/**'
+      - '.github/workflows/extension.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extension
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: extension/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run ESLint
+      run: npm run lint
+
+    - name: Run tests
+      run: npm test
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./extension/coverage/
+        flags: extension
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: extension
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: extension/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build extension
+      run: |
+        VERSION=$(node -p "require('./manifest.json').version")
+        echo "EXTENSION_VERSION=$VERSION" >> $GITHUB_ENV
+        mkdir -p dist
+        zip -r "dist/zscaler-extension-v$VERSION.zip" . \
+          -x "*.git*" -x "node_modules/*" -x "coverage/*" -x "dist/*" \
+          -x "tests/*" -x "*.map" -x "*.log"
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: zscaler-extension-${{ env.EXTENSION_VERSION }}
+        path: extension/dist/*.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts
+
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: artifacts/**/*.zip
+        tag_name: v${{ env.EXTENSION_VERSION }}
+        name: Release v${{ env.EXTENSION_VERSION }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true

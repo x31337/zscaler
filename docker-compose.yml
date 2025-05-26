@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: zscaler_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: zscaler
+      MYSQL_DATABASE: zscaler_extension
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pzscaler"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: zscaler_server
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=zscaler
+      - DB_NAME=zscaler_extension
+      - NODE_ENV=development
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
