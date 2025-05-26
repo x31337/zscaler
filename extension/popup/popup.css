@@ -1,314 +1,14 @@
-/* Main container */
-body {
-  width: 360px;
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  font-size: 14px;
-  color: #333;
-  background-color: #fff;
-}
-
-.container {
-  padding: 10px;
-}
-
-/* Header */
-.header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.logo {
-  width: 40px;
-  height: 40px;
-  margin-right: 10px;
-}
-
-h1 {
-  margin: 0;
-  font-size: 18px;
-  color: #0078d7;
-}
-
-/* Status container */
-.status-container {
-  display: flex;
-  align-items: center;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  padding: 10px;
-  margin-bottom: 15px;
-}
-
-.status-icon {
-  margin-right: 15px;
-}
-
-.status-icon img {
-  width: 48px;
-  height: 48px;
-}
-
-.status-text h2 {
-  margin: 0 0 5px 0;
-  font-size: 16px;
-}
-
-.status-text p {
-  margin: 0;
-  font-size: 14px;
-  color: #555;
-}
-
-/* Toggle container */
-.toggle-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.toggle-label {
-  font-weight: bold;
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 40px;
-  height: 20px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 20px;
-}
-
-.toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 2px;
-  bottom: 2px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-}
-
-input:checked + .toggle-slider {
-  background-color: #0078d7;
-}
-
-input:checked + .toggle-slider:before {
-  transform: translateX(20px);
-}
-
-/* Info container */
-.info-container {
-  margin-bottom: 15px;
-}
-
-.info-row {
-  display: flex;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.info-label {
-  flex: 0 0 100px;
-  font-weight: bold;
-}
-
-.info-value {
-  flex: 1;
-}
-
-/* Button styles */
-.btn {
-  background-color: #0078d7;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.btn:hover {
-  background-color: #0063b1;
-}
-
-.footer {
-  display: flex;
-  justify-content: center;
-  margin-top: 15px;
-}
-
-/* Status specific colors */
-.status-protected {
-  color: #333;
-}
-
-.status-alert {
-  color: #333;
-}
-
-.status-error {
-  color: #333;
-}
-
-.status-disabled {
-  color: #333;
-}
-
-/* IP categories styling */
-.ip-section-title {
-  font-weight: bold;
-  margin-top: 15px;
-  margin-bottom: 10px;
-  padding-bottom: 5px;
-  border-bottom: 1px solid #e0e0e0;
-  color: #333;
-}
-
-.ip-category {
-  display: flex;
-  padding: 6px 0;
-  align-items: center;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.ip-category:last-child {
-  border-bottom: none;
-}
-
-.ip-category-label {
-  flex: 0 0 120px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-}
-
-.ip-category-label.docker {
-  color: #2496ED; /* Docker blue */
-}
-
-.ip-category-label.non-private {
-  color: #4CAF50; /* Green */
-}
-
-.ip-category-label.private {
-  color: #FF9800; /* Orange */
-}
-
-.ip-category-value {
-  flex: 1;
-  font-family: monospace;
-}
-
-/* Add color dots before labels */
-.ip-category-label:before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 6px;
-}
-
-.ip-category-label.docker:before {
-  background-color: #2496ED; /* Docker blue */
-}
-
-.ip-category-label.non-private:before {
-  background-color: #4CAF50; /* Green */
-}
-
-.ip-category-label.private:before {
-  background-color: #FF9800; /* Orange */
-}
-
-/* IP category styles */
-.ip-section-title {
-  margin-top: 16px;
-  margin-bottom: 10px;
-  font-weight: 600;
-  font-size: 14px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid #e0e0e0;
-  color: #333;
-  letter-spacing: 0.2px;
-}
-
-.ip-category {
-  display: flex;
-  padding: 8px 0;
-  align-items: center;
-}
-
-.ip-category-label {
-  flex: 0 0 120px;
-  font-weight: 500;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-}
-
-.ip-category-label::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 5px;
-}
-
-.ip-category-label.docker::before {
-  background-color: #2496ED; /* Docker blue */
-}
-
-.ip-category-label.non-private::before {
-  background-color: #4CAF50; /* Green */
-}
-
-.ip-category-label.private::before {
-  background-color: #FF9800; /* Orange */
-}
-
-.ip-category-value {
-  flex: 1;
-  font-size: 12px;
-  font-family: 'Consolas', 'Courier New', monospace;
-  letter-spacing: 0;
-  line-height: 1.4;
-}
-
-/* Zscaler Chrome Extension Popup Styles */
+/* Base Styles */
 html {
-  min-width: 300px;  /* Chrome's recommended minimum */
-  min-height: 300px;  /* Chrome's recommended minimum */
+  min-width: 300px;
+  min-height: 300px;
 }
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   line-height: 1.4;
   letter-spacing: 0.2px;
 }
@@ -316,22 +16,23 @@ html {
 body {
   background-color: #f5f7fa;
   color: #333;
-  width: 100%;
+  width: 360px;
   height: 100%;
-  overflow: hidden;  /* Prevent scrolling */
-  min-width: 300px;  /* Match HTML min-width */
-  min-height: 300px;  /* Match HTML min-height */
-  font-size: 13px;  /* Set base font size */
+  overflow: hidden;
+  min-width: 300px;
+  min-height: 300px;
+  font-size: 13px;
 }
 
+/* Container */
 .container {
-  width: 100%;  /* Fill available space */
-  min-width: 300px;  /* Match HTML min-width */
-  max-width: 420px;  /* Maximum width */
-  min-height: 300px;  /* Match HTML min-height */
-  max-height: 500px;  /* Maximum height */
-  padding: 0;  /* Remove bottom padding to use space better */
-  margin: 0;   /* Remove margin since we're using 100% width */
+  width: 100%;
+  min-width: 300px;
+  max-width: 420px;
+  min-height: 300px;
+  max-height: 500px;
+  margin: 0;
+  padding: 0;
   background-color: #fff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
   border-radius: 4px;
@@ -340,18 +41,16 @@ body {
   flex-direction: column;
 }
 
-/* Header Styles */
+/* Header */
 .header {
-  background-color: #0074d4;
-  color: white;
+  height: 48px;
   padding: 8px 12px;
+  background: linear-gradient(to right, #0074d4, #0066bb);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: relative;
-  height: 48px;
   gap: 8px;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header-left {
@@ -363,22 +62,6 @@ body {
   justify-content: center;
 }
 
-.header h1 {
-  display: none; /* Hide redundant title */
-}
-
-.header h1::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  top: 50%;
-  height: 16px;
-  width: 1px;
-  background-color: rgba(255, 255, 255, 0.4);
-  transform: translateY(-50%);
-  opacity: 0.3;
-}
-
 .logo {
   height: 36px;
   width: 36px;
@@ -388,38 +71,16 @@ body {
   object-fit: contain;
 }
 
-/* Status Container Styles */
-/* Status section */
+/* Status Section */
 .header-status {
+  flex: 1;
+  min-width: 260px;
+  max-width: 75%;
   display: flex;
   align-items: center;
   height: 100%;
   padding-left: 6px;
-  flex: 1;
-  min-width: 260px;
-  max-width: 75%;
 }
-
-.status-icon {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-
-.header-toggle {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  position: relative;
-  z-index: 2;
-  height: 24px; /* Fixed height for better alignment */
-  margin-left: auto;
-  padding-left: 10px;
-  min-width: 44px;
-}
-
-/* Status icon removed */
 
 .status-text {
   display: flex;
@@ -452,33 +113,24 @@ body {
   max-width: 100%;
 }
 
-.status-protected .status-description::before {
-  content: "Protection active";
-}
-
-.status-disabled .status-description::before {
-  content: "Disabled";
-}
-
-.status-error .status-description::before {
-  content: "Check";
-}
-
-/* Toggle Switch Styles */
-.toggle-container {
-  display: none; /* Hide the original toggle container */
-}
-
-.toggle-label {
-  font-size: 14px;
-  font-weight: 500;
+/* Toggle Switch */
+.header-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  height: 24px;
+  margin-left: auto;
+  padding-left: 10px;
+  min-width: 44px;
 }
 
 .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 44px; /* Slightly wider for better visibility */
-  height: 22px; /* Slightly taller to match header height better */
+  width: 44px;
+  height: 22px;
   margin-right: 4px;
 }
 
@@ -496,136 +148,169 @@ body {
   right: 0;
   bottom: 0;
   background-color: rgba(255, 255, 255, 0.25);
-  transition: all 0.3s ease-in-out; /* Smoother transition */
+  transition: all 0.3s ease-in-out;
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-/* Default state - disconnected (red) */
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 1px;
+  background-color: white;
+  transition: all 0.3s ease-in-out;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Status States */
+#statusText {
+  position: relative;
+  padding-left: 0;
+}
+
+#statusText::before {
+  content: "•";
+  position: absolute;
+  left: -26px;
+  top: 45%;
+  transform: translateY(-50%);
+  font-size: 28px;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.95);
+}
+
+/* Protected State */
+.status-protected #statusText {
+  color: #ffffff;
+  text-shadow: 0 0 22px rgba(255, 255, 255, 0.95);
+}
+
+.status-protected #statusText::before {
+  color: #4CAF50;
+}
+
+.status-protected input:checked + .toggle-slider {
+  background-color: rgba(40, 200, 100, 0.95);
+  border-color: rgba(40, 200, 100, 1);
+  box-shadow: 0 0 10px rgba(40, 200, 100, 0.5);
+  animation: pulse-connected 3s infinite;
+}
+
+.status-protected input:checked + .toggle-slider:before {
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* Disabled State */
+.status-disabled #statusText {
+  color: #ffcccc;
+  text-shadow: 0 0 22px rgba(255, 204, 204, 0.95);
+}
+
+.status-disabled #statusText::before {
+  color: #F44336;
+}
+
 .status-disabled .toggle-slider {
   background-color: rgba(255, 79, 79, 0.25);
   border-color: rgba(255, 79, 79, 0.8);
   box-shadow: 0 0 5px rgba(255, 79, 79, 0.3);
 }
 
-.toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 18px; /* Slightly larger circle */
-  width: 18px;
-  left: 2px;
-  bottom: 1px;
-  background-color: white;
-  transition: all 0.3s ease-in-out; /* Smoother transition */
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* Red indicator for disabled state */
 .status-disabled .toggle-slider:before {
-  background-color: #ff4f4f; /* Red dot */
+  background-color: #ff4f4f;
 }
 
-input:checked + .toggle-slider {
-  background-color: rgba(255, 255, 255, 1); /* Full white for more contrast */
-  border-color: rgba(255, 255, 255, 1);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4); /* Subtle glow effect */
+/* Error State */
+.status-error #statusText {
+  color: #ffcccc;
+  text-shadow: 0 0 22px rgba(255, 204, 204, 0.95);
 }
 
-/* Connected state (green) */
-.status-protected input:checked + .toggle-slider {
-  background-color: rgba(40, 200, 100, 0.95); /* Green background */
-  border-color: rgba(40, 200, 100, 1);
-  box-shadow: 0 0 10px rgba(40, 200, 100, 0.5); /* Green glow */
+.status-error #statusText::before {
+  color: #F44336;
 }
 
-input:focus + .toggle-slider {
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
-  outline: none;
+.status-error .toggle-slider {
+  animation: pulse-error 2s infinite;
 }
 
-/* Focus state for protected/connected */
-.status-protected input:focus + .toggle-slider {
-  box-shadow: 0 0 8px rgba(40, 200, 100, 0.8);
-}
-
-/* Focus state for disabled */
-.status-disabled input:focus + .toggle-slider {
-  box-shadow: 0 0 8px rgba(255, 79, 79, 0.8);
-}
-
-/* Focus state for error */
-.status-error input:focus + .toggle-slider {
-  box-shadow: 0 0 8px rgba(255, 79, 79, 0.8);
-}
-
-input:checked + .toggle-slider:before {
-  transform: translateX(22px); /* Adjusted for wider toggle */
-  background-color: #0066c0; /* Darker blue for more contrast against white background */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-/* Connected state (green) toggle dot */
-.status-protected input:checked + .toggle-slider:before {
-  background-color: white; /* White dot on green background */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-}
-
-/* Error state red toggle */
 .status-error input:checked + .toggle-slider {
-  background-color: rgba(255, 79, 79, 0.95); /* Red background */
+  background-color: rgba(255, 79, 79, 0.95);
   border-color: rgba(255, 79, 79, 1);
-  box-shadow: 0 0 10px rgba(255, 79, 79, 0.5); /* Red glow */
+  box-shadow: 0 0 10px rgba(255, 79, 79, 0.5);
 }
 
-/* Error state toggle dot */
-.status-error input:checked + .toggle-slider:before {
-  background-color: white; /* White dot on red background */
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
 }
 
-/* Info Container Styles */
-.info-container {
-  padding: 10px 16px 8px;
-  border-bottom: 1px solid #e0e0e0;
-  flex-grow: 1;
-  background-color: #fcfcfc;
+.info-item {
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-
-.info-row {
-  display: flex;
-  margin-bottom: 10px;
-  line-height: 1.8;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
 }
 
 .info-label {
-  width: 100px;
-  font-size: 13px;
+  color: #666;
+  font-size: 11px;
   font-weight: 500;
-  color: #555;
-  letter-spacing: 0.2px;
+  min-width: 60px;
 }
 
 .info-value {
-  font-size: 13px;
+  font-size: 12px;
+  color: #333;
   flex: 1;
-  color: #2c2c2c;
-  font-weight: 400;
-  letter-spacing: 0.2px;
 }
 
-/* Footer Styles */
-.footer {
-  padding: 8px 16px;
+.info-value.mono {
+  font-family: 'Consolas', monospace;
+  font-size: 11px;
+}
+
+/* Portal Container */
+.portal-container {
+  padding: 8px;
   display: flex;
-  justify-content: center;
-  background-color: #f8fafd;
-  border-top: 1px solid #e8e8e8;
+  flex-direction: column;
+  gap: 8px;
 }
 
+.portal-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.portal-input {
+  flex: 1;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.portal-input:focus {
+  border-color: #0074d4;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 116, 212, 0.1);
+}
+
+/* Buttons */
 .btn {
   background-color: #0074d4;
   color: white;
@@ -635,12 +320,11 @@ input:checked + .toggle-slider:before {
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
-  margin: 4px 0;
   font-weight: 500;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease-in-out;
   letter-spacing: 0.3px;
   line-height: 1.4;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .btn-small {
@@ -649,109 +333,51 @@ input:checked + .toggle-slider:before {
   font-size: 11px;
 }
 
+.btn.secondary {
+  background-color: transparent;
+  border: 1px solid #0074d4;
+  color: #0074d4;
+}
+
 .btn:hover {
-  background-color: #005bb1;
+  background-color: #0066bb;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.btn.secondary:hover {
+  background-color: rgba(0, 116, 212, 0.1);
 }
 
 .btn:active {
   transform: translateY(1px);
 }
 
-/* Status Colors */
-.status-protected #statusText {
-  color: #ffffff;
-  text-shadow: 0 0 22px rgba(255, 255, 255, 0.95);
-  position: relative;
-  padding-left: 0;
+/* Footer */
+.footer {
+  padding: 8px 16px;
+  display: flex;
+  justify-content: center;
+  background-color: #f8fafd;
+  border-top: 1px solid #e8e8e8;
 }
 
-.status-protected #statusText::before {
-  content: "•";
-  position: absolute;
-  left: -26px;
-  top: 45%;
-  transform: translateY(-50%);
-  color: #4CAF50;
-  font-size: 28px;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.95);
-}
-
-.status-protected #statusText::after {
-  content: "Ready";
-}
-
-.status-disabled #statusText {
-  color: #ffcccc; /* Lighter red for better visibility against blue */
-  text-shadow: 0 0 22px rgba(255, 204, 204, 0.95);
-  position: relative;
-  padding-left: 0;
-}
-
-.status-disabled #statusText::before {
-  content: "•";
-  position: absolute;
-  left: -26px;
-  top: 45%;
-  transform: translateY(-50%);
-  color: #F44336;
-  font-size: 28px;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.95);
-}
-
-.status-disabled #statusText::after {
-  content: "Off";
-}
-
-.status-error #statusText {
-  color: #ffcccc; /* Lighter red for better visibility against blue */
-  text-shadow: 0 0 22px rgba(255, 204, 204, 0.95);
-  position: relative;
-  padding-left: 0;
-}
-
-.status-error #statusText::before {
-  content: "•";
-  position: absolute;
-  left: -26px;
-  top: 45%;
-  transform: translateY(-50%);
-  color: #F44336;
-  font-size: 28px;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.95);
-}
-
-.status-error #statusText::after {
-  content: "Error";
-}
-
-/* Add pulsing effect for error state */
+/* Animations */
 @keyframes pulse-error {
   0% { box-shadow: 0 0 0 0 rgba(255, 79, 79, 0.4); }
   70% { box-shadow: 0 0 0 5px rgba(255, 79, 79, 0); }
   100% { box-shadow: 0 0 0 0 rgba(255, 79, 79, 0); }
 }
 
-.status-error .toggle-slider {
-  animation: pulse-error 2s infinite;
-}
-
-/* Add subtle pulse for connected state */
 @keyframes pulse-connected {
   0% { box-shadow: 0 0 0 0 rgba(40, 200, 100, 0.4); }
   70% { box-shadow: 0 0 0 4px rgba(40, 200, 100, 0); }
   100% { box-shadow: 0 0 0 0 rgba(40, 200, 100, 0); }
 }
 
-.status-protected input:checked + .toggle-slider {
-  animation: pulse-connected 3s infinite;
-}
-
-/* Responsive Adjustments */
+/* Responsive */
 @media (max-width: 420px) {
   .container {
     width: 100%;
   }
 }
-
