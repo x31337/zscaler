@@ -38,12 +38,15 @@ export interface ProtectionStatus {
   enabled: boolean;
   type: ProtectionStatusType;
   message: string;
+  error?: string;
   networkConnected?: boolean;
   lastCheck?: Date;
+  details?: unknown;
 }
 
 export interface NetworkStatus {
   type: ProtectionStatusType;
+  error?: string;
   details?: unknown;
 }
 

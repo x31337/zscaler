@@ -1,8 +1,10 @@
+import { ChromeDriver } from '@/lib/chrome/driver';
 import { portalService } from '../lib/services/portal.service';
 import { storageService } from '../lib/services/storage.service';
 import { ProtectionService } from './protection.service';
 import type { PortalConfig, PortalLoginStatus } from '../lib/chrome/types';
 import type { MessageHandler, MessageResponse, ProtectionStatus } from './types';
+
 
 export class BackgroundService {
   private static readonly CHECK_INTERVALS = {
@@ -14,17 +16,19 @@ export class BackgroundService {
   private portalCheckInterval: NodeJS.Timeout | null = null;
   private protectionCheckInterval: NodeJS.Timeout | null = null;
   private networkCheckInterval: NodeJS.Timeout | null = null;
+  private driver: ChromeDriver;
   private protectionService: ProtectionService;
   private lastProtectionStatus: ProtectionStatus | null = null;
 
   constructor() {
-    this.protectionService = new ProtectionService();
+    this.driver = new ChromeDriver();
+    this.protectionService = new ProtectionService(this.driver);
     this.setupMessageListeners();
     this.setupPeriodicChecks();
   }
 
   private setupMessageListeners() {
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
       const handler = this.messageHandlers[message.action];
       if (handler) {
         handler.call(this, message)

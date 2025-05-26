@@ -1,21 +1,23 @@
 import React from 'react';
+import { Switch } from '@/app/components/Switch';
 import { useProtectionStore } from '@/lib/store/store';
+import './Header.css';
 
 export const Header: React.FC = () => {
   const { enabled, description } = useProtectionStore();
 
   return (
-    <header className="bg-blue-600 p-4 flex items-center justify-between">
-      <div className="flex items-center space-x-2">
-        <img src="/icons/logo.png" alt="Zscaler" className="w-8 h-8" />
-        <div className="text-white">
-          <div className="text-sm font-semibold">
+    <header>
+      <div className="header-content">
+        <img src="/icons/logo.png" alt="Zscaler" className="header-logo" />
+        <div className="header-text">
+          <div className="header-status">
             {enabled ? 'Protected' : 'Not Protected'}
           </div>
-          <div className="text-xs opacity-80">{description}</div>
+          <div className="header-description">{description}</div>
         </div>
       </div>
-      <Toggle />
+      <Switch />
     </header>
   );
 };

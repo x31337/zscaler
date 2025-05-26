@@ -1,16 +1,22 @@
 import CDP from 'chrome-remote-interface';
 import puppeteer from 'puppeteer-core';
+import type { Browser, HTTPRequest } from 'puppeteer-core';
 import { z } from 'zod';
 import type { PortalLoginStatus } from './types';
-
 import { ChromeDriverError, ChromeErrors } from './errors';
-
 import { delay } from '@/lib/utils';
+
+// Validation schemas
+export const PortalURLSchema = z.object({
+  company: z.string().url(),
+  partner: z.string().url()
+});
+
+export type PortalURLs = z.infer<typeof PortalURLSchema>;
 
 export class ChromeDriver {
   private cdpClient: CDP.Client | null = null;
-  private browser: puppeteer.Browser | null = null;
-  private debuggerAttached = false;
+  private browser: Browser | null = null;
 
   private async retryOperation<T>(
     operation: () => Promise<T>,
@@ -33,7 +39,7 @@ export class ChromeDriver {
     throw lastError!;
   }
 
-  async init() {
+  public async init(): Promise<void> {
     try {
       [this.cdpClient, this.browser] = await Promise.all([
         CDP({ port: 9222, local: true }).catch(() => {
@@ -53,21 +59,19 @@ export class ChromeDriver {
         Page.enable(),
         Runtime.enable()
       ]).catch(() => {
-        throw ChromeErrors.INITIALIZATION_ERROR;
+        throw ChromeErrors.NOT_INITIALIZED;
       });
-
-      this.debuggerAttached = true;
       console.log('Chrome driver initialized successfully');
     } catch (error) {
       if (error instanceof ChromeDriverError) {
         throw error;
       }
       console.error('Failed to initialize Chrome driver:', error);
-      throw ChromeErrors.INITIALIZATION_ERROR;
+      throw ChromeErrors.NOT_INITIALIZED;
     }
   }
 
-  async checkPortalStatus(url: string, retries = 3): Promise<PortalLoginStatus> {
+  public async checkPortalStatus(url: string, retries = 3): Promise<PortalLoginStatus> {
     return this.retryOperation(async () => {
       if (!this.browser || !this.cdpClient) {
         throw ChromeErrors.NOT_INITIALIZED;
@@ -78,7 +82,7 @@ export class ChromeDriver {
       try {
         // Setup network error handling
         await page.setRequestInterception(true);
-        page.on('request', request => {
+        page.on('request', (request: HTTPRequest) => {
           if (request.url() === url) {
             request.continue();
           } else {
@@ -87,7 +91,7 @@ export class ChromeDriver {
         });
 
         // Setup error handling
-        page.on('error', error => {
+        page.on('error', (error: Error) => {
           console.error('Page error:', error);
           throw ChromeErrors.NAVIGATION_FAILED;
         });
@@ -115,7 +119,7 @@ export class ChromeDriver {
             hasSignOut: !!document.querySelector(selectors.signOut),
             error: error || null
           };
-      });
+        });
 
         if (loginStatus.error) {
           return {
@@ -129,31 +133,34 @@ export class ChromeDriver {
         const loggedIn = !loginStatus.hasLoginForm && 
           (loginStatus.hasDashboard || loginStatus.hasUserProfile || loginStatus.hasSignOut);
 
-      return {
-        success: true,
-        loggedIn,
-        message: loggedIn ? 'Connected' : 'Not connected'
-      };
-    } catch (error) {
-      if (error instanceof ChromeDriverError) {
+        return {
+          success: true,
+          loggedIn,
+          message: loggedIn ? 'Connected' : 'Not connected'
+        };
+      } catch (error) {
+        if (error instanceof ChromeDriverError) {
+          return {
+            success: false,
+            loggedIn: false,
+            message: error.message,
+            error: error.code
+          };
+        }
+        console.error('Error checking portal status:', error);
         return {
           success: false,
           loggedIn: false,
-          message: error.message,
-          error: error.code
+          message: 'Error checking connection status',
+          error: ChromeDriverError.CONNECTION_ERROR
         };
+      } finally {
+        await page.close().catch(console.error);
       }
-      console.error('Error checking portal status:', error);
-      return {
-        success: false,
-        loggedIn: false,
-        message: 'Error checking connection status',
-        error: ChromeDriverError.CONNECTION_ERROR
-      };
-    }
+    }, retries);
   }
 
-  async fillLoginForm(url: string, email: string): Promise<boolean> {
+  public async fillLoginForm(url: string, email: string): Promise<boolean> {
     return this.retryOperation(async () => {
       if (!this.browser) {
         throw ChromeErrors.NOT_INITIALIZED;
@@ -174,7 +181,7 @@ export class ChromeDriver {
         );
 
         // Fill and submit login form
-        const result = await page.evaluate((email) => {
+        const result = await page.evaluate((email: string) => {
           const emailInput = document.querySelector<HTMLInputElement>(
             'input[type="email"], input[name="email"]'
           );
@@ -218,22 +225,13 @@ export class ChromeDriver {
     }, 2);
   }
 
-  async close() {
+  public async close(): Promise<void> {
     await Promise.all([
       this.cdpClient?.close(),
       this.browser?.close()
     ]);
-    this.cdpClient = null;
-    this.browser = null;
-    this.debuggerAttached = false;
+      this.cdpClient = null;
+      this.browser = null;
   }
 }
-
-// Validation schemas
-export const PortalURLSchema = z.object({
-  company: z.string().url(),
-  partner: z.string().url()
-});
-
-export type PortalURLs = z.infer<typeof PortalURLSchema>;
 

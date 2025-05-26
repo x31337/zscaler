@@ -1,16 +1,103 @@
 // Preserve all existing code from the original file
 // Zscaler Chrome Extension - Popup Script
 
-// Database operations
-const dbConfig = {
-    host: 'localhost',
-    user: 'zscaler',
-    password: 'zscaler123',
-    database: 'zscaler_settings'
+// Portal API Configuration
+const API_CONFIG = {
+    endpoint: 'http://localhost:3000/api',
+    maxRetries: 3,
+    baseDelay: 1000,
+    maxDelay: 5000,
+    timeout: 5000,
+    cacheExpiry: 300000, // 5 minutes
+    errorMessages: {
+        offline: 'Cannot connect while offline. Using cached settings if available.',
+        timeout: 'Connection timeout. Settings server may be unavailable.',
+        unavailable: 'Settings server is not available. Using cached settings if available.',
+        fetchError: 'Failed to connect to settings server. Using cached settings if available.',
+        maxRetries: 'Maximum retry attempts reached. Please try again later.',
+        invalidResponse: 'Invalid response from settings server.',
+        unknown: 'An unexpected error occurred. Please try again.'
+    }
 };
 
-// Initialize API endpoint
-const API_ENDPOINT = 'http://localhost:3000/api';
+// Portal API Helper Class
+class PortalAPIHelper {
+    constructor(config) {
+        this.config = config;
+        this.retryCount = 0;
+    }
+
+    async makeRequest(endpoint, options = {}) {
+        this.retryCount = 0;
+        return this.tryRequest(endpoint, options);
+    }
+
+    async tryRequest(endpoint, options) {
+        try {
+            if (!navigator.onLine) {
+                throw new Error('offline');
+            }
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
+            const response = await fetch(`${this.config.endpoint}${endpoint}`, {
+                ...options,
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`http_error_${response.status}`);
+            }
+
+            return await response.json();
+
+        } catch (error) {
+            console.error(`API Request Error (attempt ${this.retryCount + 1}):`, error);
+
+            if (error.message === 'offline' || error.name === 'AbortError') {
+                throw error;
+            }
+
+            if (this.retryCount < this.config.maxRetries) {
+                const delay = Math.min(
+                    this.config.baseDelay * Math.pow(2, this.retryCount),
+                    this.config.maxDelay
+                );
+                this.retryCount++;
+                
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return this.tryRequest(endpoint, options);
+            }
+
+            throw error;
+        }
+    }
+
+    getErrorMessage(error) {
+        if (error.message === 'offline') {
+            return this.config.errorMessages.offline;
+        }
+        if (error.name === 'AbortError') {
+            return this.config.errorMessages.timeout;
+        }
+        if (error.message.includes('Failed to fetch')) {
+            return this.config.errorMessages.unavailable;
+        }
+        if (error.message.startsWith('http_error_')) {
+            return this.config.errorMessages.invalidResponse;
+        }
+        if (this.retryCount >= this.config.maxRetries) {
+            return this.config.errorMessages.maxRetries;
+        }
+        return this.config.errorMessages.unknown;
+    }
+}
+
+// Initialize API helper
+const portalAPI = new PortalAPIHelper(API_CONFIG);
 
 // NetworkMonitor class for handling card slider
 class NetworkMonitor {
@@ -22,6 +109,18 @@ class NetworkMonitor {
       animationDuration: 350,          // Keep 350ms for smooth transitions
       startDelay: 1500,                // Keep 1.5s initial delay
       updateInterval: 5000,            // Keep 5s IP update interval
+      
+      // Autoplay Configuration
+      autoplay: {
+        enabled: true,                 // Enable autoplay by default
+        delay: 5000,                   // Time between slide transitions (5 seconds)
+        pauseOnHover: true,            // Pause on mouse hover
+        pauseOnTouch: true,            // Pause on touch interaction
+        resumeOnLeave: true,           // Resume when mouse/touch leaves
+        pauseOnInteraction: true,      // Pause when user interacts with slider
+        restartDelay: 2000,           // Delay before restarting after interaction
+        transitionDuration: 500       // Duration of slide transitions
+      },
       
       // Network Configuration - Optimized settings
       network: {
@@ -107,18 +206,47 @@ class NetworkMonitor {
       }
     });
 
-    // Set up error handling
-    window.addEventListener('online', () => this.handleNetworkStatusChange(true));
-    window.addEventListener('offline', () => this.handleNetworkStatusChange(false));
+    // Set up error handling and network status monitoring
+    window.addEventListener('online', () => {
+      this.handleNetworkStatusChange(true);
+      this.updateNetworkStatusUI(true);
+    });
+    
+    window.addEventListener('offline', () => {
+      this.handleNetworkStatusChange(false);
+      this.updateNetworkStatusUI(false);
+    });
+
+    // Initial network status check
+    this.updateNetworkStatusUI(navigator.onLine);
   }
 
   // Handle network status changes
   handleNetworkStatusChange(isOnline) {
     if (isOnline) {
       this.clearErrorState();
-      this.retryIPUpdates();
+      // Add small delay before retry to ensure connection is stable
+      setTimeout(() => {
+        this.retryIPUpdates();
+      }, 1000);
     } else {
-      this.setErrorState('Network connection lost');
+      this.setErrorState('Network connection lost. Using cached data if available.');
+      // Try to load cached data
+      this.loadCachedIPData();
+    }
+  }
+
+  async loadCachedIPData() {
+    try {
+      const cache = await chrome.storage.local.get(['cachedPublicIP', 'cachedPrivateIPs']);
+      if (cache.cachedPublicIP && Date.now() - cache.cachedPublicIP.timestamp < 300000) {
+        this.handleIPUpdate({
+          public: cache.cachedPublicIP.ip,
+          ...(cache.cachedPrivateIPs || {})
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to load cached IP data:', error);
     }
   }
 
@@ -235,9 +363,21 @@ class NetworkMonitor {
     // Set initial state
     this.updateSlidePositions();
 
-    // Start autoplay with initial delay
-    if (this.revSliderConfig.autoplay) {
-      setTimeout(() => this.startAutoplay(), this.revSliderConfig.startDelay);
+    // Initialize autoplay if enabled
+    if (this.revSliderConfig.autoplay?.enabled) {
+      // Set initial state attribute
+      this.slider.setAttribute('data-autoplay', 'inactive');
+      
+      // Start autoplay with initial delay
+      setTimeout(() => {
+        this.slider.setAttribute('data-autoplay', 'active');
+        this.startAutoplay();
+      }, this.revSliderConfig.startDelay);
+      
+      // Add autoplay-specific transition styles
+      this.cards.forEach(card => {
+        card.style.transition = `all ${this.revSliderConfig.autoplay.transitionDuration}ms cubic-bezier(0.4, 0.0, 0.2, 1)`;
+      });
     }
   }
 
@@ -248,7 +388,7 @@ class NetworkMonitor {
     this.eventListeners = {
       touchstart: (e) => {
         this.touchStartX = e.touches[0].clientX;
-        if (this.revSliderConfig.pauseOnTouch) {
+        if (this.revSliderConfig.autoplay?.pauseOnTouch) {
           this.pauseAutoplay();
         }
       },
@@ -268,10 +408,20 @@ class NetworkMonitor {
         if (!this.isAnimating) {
           this.handleSwipe();
         }
-        this.resumeAutoplay();
+        if (this.revSliderConfig.autoplay?.resumeOnLeave) {
+          this.resumeAutoplay();
+        }
       },
-      mouseenter: () => this.pauseAutoplay(),
-      mouseleave: () => this.resumeAutoplay()
+      mouseenter: () => {
+        if (this.revSliderConfig.autoplay?.pauseOnHover) {
+          this.pauseAutoplay();
+        }
+      },
+      mouseleave: () => {
+        if (this.revSliderConfig.autoplay?.resumeOnLeave) {
+          this.resumeAutoplay();
+        }
+      }
     };
 
     // Add touch events
@@ -279,10 +429,12 @@ class NetworkMonitor {
     this.slider.addEventListener('touchmove', this.eventListeners.touchmove);
     this.slider.addEventListener('touchend', this.eventListeners.touchend);
 
-    // Add mouse interaction
-    if (this.revSliderConfig.pauseOnHover) {
-      this.slider.addEventListener('mouseenter', this.eventListeners.mouseenter);
-      if (this.revSliderConfig.resumeOnLeave) {
+    // Add mouse interaction for autoplay control
+    if (this.revSliderConfig.autoplay?.enabled) {
+      if (this.revSliderConfig.autoplay.pauseOnHover) {
+        this.slider.addEventListener('mouseenter', this.eventListeners.mouseenter);
+      }
+      if (this.revSliderConfig.autoplay.resumeOnLeave) {
         this.slider.addEventListener('mouseleave', this.eventListeners.mouseleave);
       }
     }
@@ -292,9 +444,13 @@ class NetworkMonitor {
       const clickHandler = () => {
         if (!this.isAnimating) {
           this.goToSlide(index);
-          // Temporarily pause autoplay after manual navigation
-          this.pauseAutoplay();
-          setTimeout(() => this.resumeAutoplay(), this.revSliderConfig.delay);
+          // Handle autoplay pause on interaction
+          if (this.revSliderConfig.autoplay?.pauseOnInteraction) {
+            this.pauseAutoplay();
+            if (this.revSliderConfig.autoplay.resumeOnLeave) {
+              setTimeout(() => this.resumeAutoplay(), this.revSliderConfig.autoplay.restartDelay || 2000);
+            }
+          }
         }
       };
       dot.addEventListener('click', clickHandler);
@@ -351,12 +507,41 @@ class NetworkMonitor {
     setInterval(() => this.updateIPs(), 5000); // Update every 5 seconds
   }
 
+  // Update network status UI
+  updateNetworkStatusUI(isOnline) {
+    const statusElement = document.getElementById('networkStatus') || 
+                         document.createElement('div');
+    
+    if (!statusElement.id) {
+      statusElement.id = 'networkStatus';
+      statusElement.className = 'network-status';
+      const container = document.querySelector('.container');
+      container.insertBefore(statusElement, container.firstChild);
+    }
+
+    statusElement.className = `network-status ${isOnline ? 'status-online' : 'status-offline'}`;
+    statusElement.textContent = isOnline ? 'Online' : 'Offline';
+  }
+
   async updateIPs() {
+    const retryDelay = 2000; // Base retry delay of 2 seconds
+    let retryAttempt = 0;
+    const maxRetries = 3;
+
     try {
+      // Check network connectivity
+      if (!navigator.onLine) {
+        this.loadCachedIPData();
+        return;
+      }
+
       // Show loading state for all cards
       ['public', 'docker', 'non-private', 'private'].forEach(cardId => {
         const card = document.querySelector(`[data-card="${cardId}"]`);
-        if (card) card.classList.add('loading');
+        if (card) {
+          card.classList.add('loading');
+          card.classList.remove('error');
+        }
       });
 
       // Update all IPs concurrently
@@ -439,7 +624,23 @@ class NetworkMonitor {
       const data = await response.json();
       document.getElementById('publicIP').textContent = data.ip;
     } catch (error) {
-      document.getElementById('publicIP').textContent = 'Error fetching IP';
+      const publicIPElement = document.getElementById('publicIP');
+      if (publicIPElement) {
+        publicIPElement.textContent = 'Error fetching IP';
+        publicIPElement.classList.add('error');
+      }
+
+      // Implement exponential backoff for retries
+      if (retryAttempt < maxRetries && navigator.onLine) {
+        const currentDelay = retryDelay * Math.pow(2, retryAttempt);
+        retryAttempt++;
+        
+        setTimeout(() => {
+          this.updateIPs();
+        }, currentDelay);
+      } else {
+        this.loadCachedIPData();
+      }
     }
   }
 
@@ -578,18 +779,42 @@ class NetworkMonitor {
   }
 
   startAutoplay() {
-    if (this.autoplayInterval || this.isPaused) return;
+    if (!this.revSliderConfig.autoplay?.enabled || this.autoplayInterval || this.isPaused) return;
     
+    // Clear any existing interval
     clearInterval(this.autoplayInterval);
+    
+    // Set data attribute for CSS transitions
+    if (this.slider) {
+      this.slider.setAttribute('data-autoplay', 'active');
+    }
+    
+    // Start the autoplay interval
     this.autoplayInterval = setInterval(() => {
       if (!this.isAnimating && !this.isPaused) {
         this.nextSlide('next');
+        
+        // Trigger smooth transition animation
+        requestAnimationFrame(() => {
+          this.cards.forEach(card => {
+            card.style.transition = `all ${this.revSliderConfig.autoplay.transitionDuration}ms cubic-bezier(0.4, 0.0, 0.2, 1)`;
+          });
+        });
       }
-    }, this.revSliderConfig.delay);
+    }, this.revSliderConfig.autoplay.delay || this.revSliderConfig.delay);
   }
 
   pauseAutoplay() {
+    if (!this.revSliderConfig.autoplay?.enabled) return;
+    
     this.isPaused = true;
+    
+    // Update slider state
+    if (this.slider) {
+      this.slider.setAttribute('data-autoplay', 'paused');
+    }
+    
+    // Clear the interval
     if (this.autoplayInterval) {
       clearInterval(this.autoplayInterval);
       this.autoplayInterval = null;
@@ -597,9 +822,22 @@ class NetworkMonitor {
   }
 
   resumeAutoplay() {
-    if (!this.revSliderConfig.autoplay) return;
-    this.isPaused = false;
-    this.startAutoplay();
+    if (!this.revSliderConfig.autoplay?.enabled) return;
+    
+    // Add delay before resuming
+    setTimeout(() => {
+      if (!this.isPaused) {
+        this.isPaused = false;
+        
+        // Update slider state
+        if (this.slider) {
+          this.slider.setAttribute('data-autoplay', 'active');
+        }
+        
+        // Restart autoplay
+        this.startAutoplay();
+      }
+    }, this.revSliderConfig.autoplay.restartDelay || 2000);
   }
 
   updateSlidePositions() {
@@ -817,21 +1055,25 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 // Keep all the existing functions from the original file
-  async function initializePopup() {
-    // Get storage data using Promise
-    const result = await new Promise(resolve => {
-      chrome.storage.local.get([
-        'protectionEnabled', 
-        'statusType', 
-        'cloudName', 
-        'userName', 
-        'portalURL', 
-        'portalEmail',
-        'portalLoginStatus',
-        'partnerPortalURL',
-        'partnerPortalEmail',
-        'partnerPortalLoginStatus'
-      ], resolve);
+async function initializePopup() {
+    try {
+        // Get all relevant storage data
+        const result = await new Promise(resolve => {
+            chrome.storage.local.get([
+                'protectionEnabled', 
+                'statusType', 
+                'cloudName', 
+                'userName', 
+                'portalURL', 
+                'portalEmail',
+                'portalLoginStatus',
+                'portalStatusTimestamp',
+                'portalSettings',
+                'portalSettingsTimestamp',
+                'partnerPortalURL',
+                'partnerPortalEmail',
+                'partnerPortalLoginStatus'
+            ], resolve);
     });
       
     const enabled = result.protectionEnabled !== undefined ? result.protectionEnabled : true;
@@ -869,16 +1111,62 @@ document.addEventListener('DOMContentLoaded', async function() {
       partnerPortalEmailInput.value = result.partnerPortalEmail;
     }
     
+    // Check if cached portal status is still valid (5 minutes)
+    const isCacheValid = result.portalStatusTimestamp && 
+                        (Date.now() - result.portalStatusTimestamp < 300000);
+    
     // Update portal statuses
-    updatePortalStatusUI(result.portalLoginStatus || false);
+    updatePortalStatusUI(result.portalLoginStatus || false, isCacheValid);
     updatePartnerPortalStatusUI(result.partnerPortalLoginStatus || false);
     
-    // Update IP addresses
-    await updateIPAddresses();
+    // Update IP addresses - catch any errors to prevent initialization failure
+    try {
+        await updateIPAddresses();
+    } catch (error) {
+        console.error('Error updating IP addresses during initialization:', error);
+    }
     
-    // Check portal login statuses
-    await checkPortalStatus();
-    await checkPartnerPortalStatus();
+    // Initialize network status monitoring
+    window.addEventListener('online', async () => {
+        // When coming back online, retry portal status checks
+        try {
+            await checkPortalStatus();
+            await checkPartnerPortalStatus();
+        } catch (error) {
+            console.error('Error checking portal statuses after coming online:', error);
+        }
+    });
+
+    window.addEventListener('offline', () => {
+        // When going offline, update UI accordingly
+        portalStatusText.textContent = API_CONFIG.errorMessages.offline;
+        partnerPortalStatusText.textContent = API_CONFIG.errorMessages.offline;
+    });
+
+    // Initial portal status checks
+    try {
+        if (navigator.onLine) {
+            await Promise.allSettled([
+                checkPortalStatus(),
+                checkPartnerPortalStatus()
+            ]);
+        } else {
+            // If offline, use cached data
+            const isCacheValid = result.portalStatusTimestamp && 
+                               (Date.now() - result.portalStatusTimestamp < API_CONFIG.cacheExpiry);
+            
+            if (isCacheValid) {
+                updatePortalStatusUI(result.portalLoginStatus, true);
+                updatePartnerPortalStatusUI(result.partnerPortalLoginStatus, true);
+            }
+            
+            portalStatusText.textContent = API_CONFIG.errorMessages.offline;
+            partnerPortalStatusText.textContent = API_CONFIG.errorMessages.offline;
+        }
+    } catch (error) {
+        console.error('Error during portal status initialization:', error);
+        // Continue initialization despite portal check failures
+    }
   }
   
   // Function to toggle protection
@@ -1038,14 +1326,79 @@ function formatIP(ip) {
 
 // Function to get public IP
 async function getPublicIP() {
-  try {
-    const response = await fetch('https://api.ipify.org?format=json');
-    const data = await response.json();
-    return validateIP(data.ip);
-  } catch (error) {
-    console.error('Error fetching public IP:', error);
-    return 'Not available';
+  const maxRetries = 3;
+  let retryCount = 0;
+  let lastError = null;
+
+  while (retryCount < maxRetries) {
+    try {
+      // Check network connectivity
+      if (!navigator.onLine) {
+        throw new Error('Network is offline');
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch('https://api.ipify.org?format=json', {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const ip = validateIP(data.ip);
+
+      // Cache successful response
+      if (ip !== 'Not available') {
+        try {
+          await chrome.storage.local.set({
+            'cachedPublicIP': {
+              ip: ip,
+              timestamp: Date.now()
+            }
+          });
+        } catch (cacheError) {
+          console.warn('Failed to cache IP:', cacheError);
+        }
+      }
+
+      return ip;
+
+    } catch (error) {
+      lastError = error;
+      console.error(`Error fetching public IP (attempt ${retryCount + 1}):`, error);
+
+      // Don't retry on abort or offline
+      if (error.name === 'AbortError' || error.message === 'Network is offline') {
+        break;
+      }
+
+      retryCount++;
+      if (retryCount < maxRetries) {
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+      }
+    }
   }
+
+  // Try to get cached IP if available
+  try {
+    const cache = await chrome.storage.local.get('cachedPublicIP');
+    if (cache.cachedPublicIP && 
+        Date.now() - cache.cachedPublicIP.timestamp < 300000) { // 5 minutes cache
+      return cache.cachedPublicIP.ip;
+    }
+  } catch (cacheError) {
+    console.warn('Failed to read cached IP:', cacheError);
+  }
+
+  console.error('All attempts to fetch public IP failed:', lastError);
+  return 'Not available';
 }
 
 // Function to get all private IPs categorized by type
@@ -1403,24 +1756,43 @@ async function openPortal() {
   }
 }
 
-// Save portal configuration with auto-detection
+// Save portal configuration with auto-detection and error handling
 async function savePortalConfig() {
-  try {
-    const email = portalEmailInput.value;
-    
-    // Validate email
-    if (!email || !email.includes('@')) {
-      portalStatusText.textContent = 'Please enter a valid email';
-      return;
-    }
-    
-    // Show loading state
-    savePortalConfigBtn.disabled = true;
-    savePortalConfigBtn.textContent = 'Configuring...';
-    portalStatusText.textContent = 'Detecting settings...';
-    
-    // Save to database and auto-detect settings
-    const response = await fetch('http://localhost:3000/api/portal-settings', {
+    try {
+        const email = portalEmailInput.value;
+        
+        // Validate email
+        if (!email || !email.includes('@')) {
+            portalStatusText.textContent = 'Please enter a valid email';
+            return;
+        }
+        
+        // Show loading state
+        savePortalConfigBtn.disabled = true;
+        savePortalConfigBtn.textContent = 'Configuring...';
+        portalStatusText.textContent = 'Detecting settings...';
+        
+        // Get cached settings before making the request
+        const cached = await chrome.storage.local.get(['portalSettings', 'portalEmail', 'portalSettingsTimestamp']);
+        const isCacheValid = cached.portalSettingsTimestamp && 
+                           (Date.now() - cached.portalSettingsTimestamp < API_CONFIG.cacheExpiry);
+        
+        try {
+            // Attempt to save and detect settings
+            const data = await portalAPI.makeRequest('/portal-settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    portal_type: 'company',
+                    email: email
+                })
+            });
+
+    try {
+      const response = await fetch('http://localhost:3000/api/portal-settings', {
+        signal: controller.signal,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1432,30 +1804,48 @@ async function savePortalConfig() {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to save settings');
+      throw new Error(`Server error: ${response.status}`);
     }
 
+    clearTimeout(timeoutId);
     const data = await response.json();
     
-    // Update UI with detected settings
-    if (data.success && data.settings) {
-      // Save to Chrome storage
-      await chrome.storage.local.set({
-        portalEmail: email,
-        portalURL: data.settings.portal,
-        portalSettings: data.settings
-      });
-      
-      portalStatusText.textContent = 'Settings configured successfully';
-      portalStatusDot.className = 'status-dot connected';
-      
-      // Check portal status after save
-      await checkPortalStatus();
-    }
-  } catch (error) {
-    console.error('Error saving portal configuration:', error);
-    portalStatusText.textContent = 'Error saving settings';
-    portalStatusDot.className = 'status-dot disconnected';
+            // Update UI with detected settings
+            if (data.success && data.settings) {
+                // Save to Chrome storage with timestamp
+                await chrome.storage.local.set({
+                    portalEmail: email,
+                    portalURL: data.settings.portal,
+                    portalSettings: data.settings,
+                    portalSettingsTimestamp: Date.now()
+                });
+                
+                portalStatusText.textContent = 'Settings configured successfully';
+                portalStatusDot.className = 'status-dot connected';
+                
+                // Check portal status after save
+                await checkPortalStatus();
+            } else {
+                throw new Error(API_CONFIG.errorMessages.invalidResponse);
+            }
+            
+        } catch (error) {
+            console.error('Error saving portal configuration:', error);
+            
+            // Get appropriate error message
+            const errorMessage = portalAPI.getErrorMessage(error);
+            portalStatusText.textContent = errorMessage;
+            portalStatusDot.className = 'status-dot disconnected';
+            
+            // Try to use cached settings if available and valid
+            if (isCacheValid && cached.portalEmail === email && cached.portalSettings) {
+                portalStatusText.textContent += ' Using cached settings.';
+                await chrome.storage.local.set({
+                    portalEmail: email,
+                    portalSettings: cached.portalSettings,
+                    portalSettingsTimestamp: cached.portalSettingsTimestamp
+                });
+            }
   } finally {
     // Re-enable button
     savePortalConfigBtn.disabled = false;
@@ -1526,39 +1916,84 @@ async function savePartnerPortalConfig() {
 
 // Check portal login status
 async function checkPortalStatus() {
-  try {
-    // Update UI to show checking
-    portalStatusDot.className = 'status-dot';
-    portalStatusText.textContent = 'Checking portal status...';
+    try {
+        // Update UI to show checking
+        portalStatusDot.className = 'status-dot';
+        portalStatusText.textContent = 'Checking portal status...';
+        
+        // Get cached status before making the request
+        const cached = await chrome.storage.local.get([
+            'portalStatus',
+            'portalStatusTimestamp',
+            'portalSettings'
+        ]);
+        
+        const isCacheValid = cached.portalStatusTimestamp && 
+                           (Date.now() - cached.portalStatusTimestamp < API_CONFIG.cacheExpiry);
+        
+        // If offline and we have valid cache, use it immediately
+        if (!navigator.onLine && isCacheValid) {
+            updatePortalStatusUI(cached.portalStatus, true);
+            portalStatusText.textContent = API_CONFIG.errorMessages.offline;
+            return;
+        }
+        
+        try {
+            // Attempt to check portal status
+            const data = await portalAPI.makeRequest('/portal-status', {
+                method: 'GET'
+            });
     
-    // Send message to background script
-    const response = await new Promise(resolve => {
+    // Set up timeout for the check
+    const checkPromise = new Promise(resolve => {
       chrome.runtime.sendMessage({
         action: 'checkPortalLogin'
       }, resolve);
     });
     
-    if (response && response.success) {
-      // Update UI based on login status
-      updatePortalStatusUI(response.loggedIn);
-    } else {
-      // Handle error
-      portalStatusDot.className = 'status-dot';
-      portalStatusText.textContent = response ? response.message : 'Failed to check portal status';
-      console.error('Failed to check portal status:', response ? response.message : 'Unknown error');
-    }
-  } catch (error) {
-    console.error('Error checking portal status:', error);
-    portalStatusDot.className = 'status-dot';
-    portalStatusText.textContent = 'Error checking portal status';
+    // Set up timeout
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('timeout')), 5000);
+    });
+
+    // Race between the check and timeout
+    const response = await Promise.race([checkPromise, timeoutPromise]);
+
+            if (data.success) {
+                // Update cache with new status
+                await chrome.storage.local.set({
+                    portalStatus: data.loggedIn,
+                    portalStatusTimestamp: Date.now()
+                });
+                
+                updatePortalStatusUI(data.loggedIn, false);
+            } else {
+                throw new Error(API_CONFIG.errorMessages.invalidResponse);
+            }
+            
+        } catch (error) {
+            console.error('Error checking portal status:', error);
+            
+            // Get appropriate error message
+            const errorMessage = portalAPI.getErrorMessage(error);
+            portalStatusText.textContent = errorMessage;
+            portalStatusDot.className = 'status-dot';
+            
+            // Use cached status if available and valid
+            if (isCacheValid && cached.portalStatus !== undefined) {
+                updatePortalStatusUI(cached.portalStatus, true);
+            } else if (!cached.portalSettings) {
+                portalStatusText.textContent = 'Portal settings not configured';
+            }
+        }
   }
 }
 
 // Update portal status UI
-function updatePortalStatusUI(isLoggedIn) {
+function updatePortalStatusUI(isLoggedIn, isCached = false) {
   if (isLoggedIn) {
     portalStatusDot.className = 'status-dot connected';
-    portalStatusText.textContent = 'Connected to portal';
+    portalStatusText.textContent = `Connected to portal${isCached ? ' (cached)' : ''}`;
   } else {
     portalStatusDot.className = 'status-dot disconnected';
     

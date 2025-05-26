@@ -70,10 +70,18 @@ export class PortalService {
   async configure(config: PortalSettings) {
     if (!this.driver) throw new Error('Chrome driver not initialized');
 
-    const result = await this.driver.fillLoginForm(config.url, config.email);
+    const portalUrl = config.type === 'company' 
+      ? ZSCALER_SETTINGS.company.portal 
+      : ZSCALER_SETTINGS.partner.portal;
+
+    const result = await this.driver.fillLoginForm(portalUrl, config.email);
     if (!result) throw new Error('Failed to configure portal');
 
-    await storageService.savePortalConfig(config);
+    await storageService.savePortalConfig({
+      type: config.type,
+      email: config.email,
+      url: portalUrl
+    });
     return { success: true };
   }
 
@@ -83,17 +91,21 @@ export class PortalService {
       ? ZSCALER_SETTINGS.company 
       : ZSCALER_SETTINGS.partner;
 
-    const customSettings = {
-      ...portalSettings,
-      portal: `${domain}.${portalSettings.base}`
-    };
+    const portalUrl = `${domain}.${portalSettings.base}`;
 
     await storageService.savePortalConfig({
-      ...settings,
-      url: customSettings.portal
+      type: settings.type,
+      email: settings.email,
+      url: portalUrl
     });
 
-    return { success: true, settings: customSettings };
+    return { 
+      success: true, 
+      settings: {
+        ...portalSettings,
+        portal: portalUrl
+      }
+    };
   }
 
   private handleStatusNotifications(results: Record<string, any>) {

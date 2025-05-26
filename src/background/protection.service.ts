@@ -47,6 +47,14 @@ export class ProtectionService {
     };
   }
 
+  async checkNetworkStatus(): Promise<NetworkStatus> {
+    return this.checkNetwork();
+  }
+
+  async getNetworkStatus(): Promise<NetworkStatus> {
+    return this.checkNetwork();
+  }
+
   async checkStatus(): Promise<ProtectionStatus> {
     try {
       const settings = await storageService.getAllSettings();
@@ -102,23 +110,108 @@ export class ProtectionService {
     this.updateIcon(status.enabled, status.type);
   }
 
-  private updateIcon(enabled: boolean, type: string) {
-    const iconPath = this.getIconPath(enabled, type);
-    chrome.action.setIcon({ path: iconPath });
+  private async updateIcon(enabled: boolean, type: string) {
+    try {
+      const iconPaths = await this.getIconPaths(enabled, type);
+      await chrome.action.setIcon({ path: iconPaths });
+    } catch (error) {
+      console.error('Error setting icon:', error);
+      // Try to set fallback icon
+      await this.setFallbackIcon(enabled, type);
+    }
   }
 
-  private getIconPath(enabled: boolean, type: string) {
-    const sizes = { 16: '', 48: '', 128: '' };
+  private async getIconPaths(enabled: boolean, type: string): Promise<Record<string, string>> {
+    const sizes = ['16', '48', '128'] as const;
     const base = enabled ? 'icon-enabled' : 'icon-disabled';
     const suffix = type === 'error' ? '-error' : 
                   type === 'alert' ? '-alert' : 
                   '';
 
-    Object.keys(sizes).forEach(size => {
-      sizes[size as keyof typeof sizes] = `/icons/${base}${suffix}-${size}.png`;
-    });
+    const paths: Partial<Record<string, string>> = {};
+    let hasValidIcon = false;
 
-    return sizes;
+    // Try to get each icon size
+    for (const size of sizes) {
+      try {
+        const path = `icons/${base}${suffix}-${size}.png`;
+        const url = chrome.runtime.getURL(path);
+        
+        // Verify icon exists by trying to fetch it
+        const response = await fetch(url);
+        if (response.ok) {
+          paths[size] = url;
+          hasValidIcon = true;
+        } else {
+          console.warn(`Icon not found: ${path}`);
+        }
+      } catch (error) {
+        console.warn(`Error loading icon for size ${size}:`, error);
+      }
+    }
+
+    // If no icons were loaded successfully, throw error to trigger fallback
+    if (!hasValidIcon) {
+      throw new Error('No valid icons found');
+    }
+
+    // Ensure we have all sizes by falling back to nearest size if needed
+    const fallbackSizes = ['48', '128', '16'];
+    for (const size of sizes) {
+      if (!paths[size]) {
+        // Find first available fallback icon
+        for (const fallbackSize of fallbackSizes) {
+          if (paths[fallbackSize]) {
+            paths[size] = paths[fallbackSize];
+            console.warn(`Using ${fallbackSize}px icon as fallback for ${size}px`);
+            break;
+          }
+        }
+      }
+    }
+
+    return paths as Record<string, string>;
+  }
+
+  private async setFallbackIcon(enabled: boolean, type: string) {
+    try {
+      // Create a simple colored square as fallback
+      const canvas = new OffscreenCanvas(48, 48);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
+
+      // Set color based on state
+      let color = enabled ? '#4CAF50' : '#9E9E9E'; // green for enabled, grey for disabled
+      if (type === 'error') color = '#F44336'; // red for error
+      if (type === 'alert') color = '#FFC107'; // yellow for alert
+
+      // Draw colored square
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, 48, 48);
+
+      // Add status indicator
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 24px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(enabled ? '✓' : '×', 24, 24);
+
+      // Convert to ImageData
+      const imageData = ctx.getImageData(0, 0, 48, 48);
+
+      // Set the fallback icon
+      await chrome.action.setIcon({ imageData });
+
+    } catch (error) {
+      console.error('Error setting fallback icon:', error);
+      // If all else fails, try to set a basic emoji as icon text
+      await chrome.action.setBadgeText({
+        text: enabled ? '✓' : '×'
+      });
+      await chrome.action.setBadgeBackgroundColor({
+        color: enabled ? '#4CAF50' : '#F44336'
+      });
+    }
   }
 
   private getStatusMessage(enabled: boolean, type: string): string {

@@ -167,6 +167,95 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+/* Network Status Indicator */
+.network-status {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  margin: 8px;
+  transition: all 0.3s ease;
+}
+
+.status-online {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: #4CAF50;
+}
+
+.status-offline {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #F44336;
+}
+
+.network-status::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.status-online::before {
+  background-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.status-offline::before {
+  background-color: #F44336;
+  box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.2);
+}
+
+/* API Error States */
+.api-error {
+  background-color: rgba(244, 67, 54, 0.05);
+  border: 1px solid rgba(244, 67, 54, 0.1);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 8px;
+  font-size: 12px;
+  color: #F44336;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.api-error.with-retry {
+  padding-right: 32px;
+  position: relative;
+}
+
+.retry-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #0074d4;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 11px;
+}
+
+.retry-button:hover {
+  text-decoration: underline;
+}
+
+.cached-data-notice {
+  background-color: rgba(255, 152, 0, 0.05);
+  border: 1px solid rgba(255, 152, 0, 0.1);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 8px;
+  font-size: 12px;
+  color: #F57C00;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Status States */
 #statusText {
   position: relative;
@@ -262,8 +351,20 @@ body {
 .rev-slide {
   opacity: 0;
   transform: translateX(100%);
-  transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+  transition: transform 0.35s ease-in-out, opacity 0.35s ease-in-out;
   will-change: transform, opacity;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Autoplay transition states */
+.rev-slider[data-autoplay='active'] .rev-slide {
+  transition-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.rev-slider[data-autoplay='paused'] .rev-slide {
+  transition-duration: 0.5s;
+  transition-timing-function: ease-out;
 }
 
 .rev-slide-active {

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { PortalConfig } from '../chrome/types';
+import type { ProtectionStatus } from '@/background/types';
 
 // Storage schemas
 const StorageSchema = z.object({
@@ -98,6 +99,10 @@ export class StorageService {
     }
   }
 
+  async saveProtectionStatus(status: ProtectionStatus): Promise<void> {
+    await chrome.storage.local.set({ protectionStatus: status });
+  }
+
   async clearAll(): Promise<void> {
     try {
       await chrome.storage.local.clear();
@@ -117,4 +122,3 @@ export class StorageService {
 
 // Export singleton instance
 export const storageService = StorageService.getInstance();
-
