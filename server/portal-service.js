@@ -1,125 +1,103 @@
-// Portal Service Implementation
-const mysql = require('mysql2');
 const express = require('express');
+const Docker = require('dockerode');
 const cors = require('cors');
+const morgan = require('morgan');
+const helmet = require('helmet');
+const si = require('systeminformation');
+const docker = new Docker({socketPath: '/var/run/docker.sock'});
+
 const app = express();
-
-// Database configuration
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'zscaler',
-    password: 'zscaler123',
-    database: 'zscaler_settings',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
-
-// Zscaler settings mapping
-const ZSCALER_SETTINGS = {
-    company: {
-        base: 'zscaler.net',
-        portal: 'admin.zscaler.net',
-        api: 'api.zscaler.net'
-    },
-    partner: {
-        base: 'zscalerpartner.net',
-        portal: 'partner.zscaler.net',
-        api: 'api.zscalerpartner.net'
-    }
-};
 
 app.use(cors());
 app.use(express.json());
+app.use(morgan('combined'));
+app.use(helmet());
 
-// Auto-detect Zscaler settings based on email
-function detectZscalerSettings(email, portalType) {
-    if (!email || !email.includes('@')) {
-        throw new Error('Invalid email format');
-    }
-
-    const domain = email.split('@')[1];
-    const settings = ZSCALER_SETTINGS[portalType];
-    
-    return {
-        ...settings,
-        domain: domain,
-        portal: `${domain}.${settings.base}`,
-        lastUpdated: new Date().toISOString()
-    };
-}
-
-// Save portal settings with auto-detection
-app.post('/api/portal-settings', async (req, res) => {
-    const { portal_type, email } = req.body;
-    
-    try {
-        // Auto-detect settings based on email
-        const settings = detectZscalerSettings(email, portal_type);
-        
-        // Store in database with auto-detected settings
-        const [result] = await pool.promise().execute(
-            'INSERT INTO portal_settings (portal_type, email, url, settings, auto_detected) ' +
-            'VALUES (?, ?, ?, ?, true) ' +
-            'ON DUPLICATE KEY UPDATE email = ?, url = ?, settings = ?, auto_detected = true',
-            [
-                portal_type,
-                email,
-                settings.portal,
-                JSON.stringify(settings),
-                email,
-                settings.portal,
-                JSON.stringify(settings)
-            ]
-        );
-        
-        res.json({
-            success: true,
-            settings: settings
-        });
-    } catch (error) {
-        console.error('Error saving portal settings:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to save settings' 
-        });
-    }
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// Get portal settings
-app.get('/api/portal-settings/:type', async (req, res) => {
-    const portalType = req.params.type;
-    
-    try {
-        const [rows] = await pool.promise().execute(
-            'SELECT email, url, settings, auto_detected FROM portal_settings WHERE portal_type = ?',
-            [portalType]
-        );
-        
-        if (rows.length > 0) {
-            res.json({ 
-                success: true, 
-                settings: rows[0] 
-            });
-        } else {
-            res.json({ 
-                success: true, 
-                settings: null 
-            });
+// Network status endpoint
+app.get('/api/network/status', async (req, res) => {
+  try {
+    const networkStats = await si.networkStats();
+    res.json({
+      status: 'active',
+      stats: networkStats[0],
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Protection status endpoint
+app.get('/api/protection/status', async (req, res) => {
+  try {
+    const [cpu, mem] = await Promise.all([
+      si.currentLoad(),
+      si.mem()
+    ]);
+    res.json({
+      status: 'active',
+      system_load: {
+        cpu: cpu.currentLoad,
+        memory: (mem.used / mem.total) * 100
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Portal company status endpoint
+app.get('/api/portal/status/company', async (req, res) => {
+  try {
+    const containers = await docker.listContainers({ all: true });
+    res.json({
+      status: 'active',
+      containers: containers.length,
+      running: containers.filter(c => c.State === 'running').length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Container monitoring endpoints
+app.get('/api/containers', async (req, res) => {
+  try {
+    const containers = await docker.listContainers({ all: true });
+    const containerDetails = await Promise.all(containers.map(async (c) => {
+      const container = docker.getContainer(c.Id);
+      let stats = {};
+      if (c.State === 'running') {
+        try {
+          stats = await container.stats({ stream: false });
+        } catch (e) {
+          console.error(`Error getting stats for container ${c.Id}:`, e);
         }
-    } catch (error) {
-        console.error('Error getting portal settings:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to get settings' 
-        });
-    }
+      }
+      return {
+        id: c.Id.slice(0, 12),
+        name: c.Names[0].replace(/^\//, ''),
+        image: c.Image,
+        state: c.State,
+        status: c.Status,
+        stats: stats
+      };
+    }));
+    res.json(containerDetails);
+  } catch (error) {
+    console.error('Error listing containers:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// Start server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
-    console.log(`Portal settings service running on port ${PORT}`);
+  console.log(`Unified portal service running on port ${PORT}`);
 });
-
-module.exports = app;
