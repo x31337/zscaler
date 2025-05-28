@@ -221,6 +221,68 @@ body {
   gap: 8px;
 }
 
+/* Error Message and Stack Trace */
+.error-message {
+  background-color: #fff3f3;
+  border: 1px solid #ffcdd2;
+  border-radius: 4px;
+  margin: 8px;
+  overflow: hidden;
+}
+
+.error-header {
+  padding: 8px 12px;
+  background-color: #ffebee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.error-title {
+  font-weight: 500;
+  color: #d32f2f;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-toggle {
+  color: #666;
+  font-size: 12px;
+  user-select: none;
+}
+
+.stack-trace {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+  background-color: #fff;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 0 12px;
+}
+
+.stack-trace.expanded {
+  max-height: 300px;
+  padding: 12px;
+  overflow-y: auto;
+  border-top: 1px solid #ffcdd2;
+}
+
+.stack-trace-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 2px 0;
+  color: #666;
+}
+
+.stack-trace-line.error {
+  color: #d32f2f;
+  font-weight: bold;
+}
+
 .api-error.with-retry {
   padding-right: 32px;
   position: relative;

@@ -319,15 +319,68 @@ class NetworkMonitor {
     }
   }
 
-  // Set error state
-  setErrorState(message) {
+  // Set error state with collapsible stack trace
+  setErrorState(error) {
     clearTimeout(this.networkState.errorTimeout);
     this.networkState.errorTimeout = setTimeout(() => {
       this.cards.forEach(card => card.classList.add('error'));
-      const errorMessage = document.createElement('div');
-      errorMessage.className = 'error-message';
-      errorMessage.textContent = message;
-      this.slider.appendChild(errorMessage);
+      
+      // Remove any existing error message
+      const existingError = this.slider.querySelector('.error-message');
+      if (existingError) {
+        existingError.remove();
+      }
+
+      // Create error container
+      const errorContainer = document.createElement('div');
+      errorContainer.className = 'error-message';
+
+      // Create error header
+      const errorHeader = document.createElement('div');
+      errorHeader.className = 'error-header';
+      
+      // Create error title with icon
+      const errorTitle = document.createElement('div');
+      errorTitle.className = 'error-title';
+      errorTitle.innerHTML = `<span>⚠️</span> ${error.message || (typeof error === 'string' ? error : 'An error occurred')}`;
+      
+      // Create toggle button
+      const errorToggle = document.createElement('div');
+      errorToggle.className = 'error-toggle';
+      errorToggle.textContent = 'Show details';
+      
+      // Create stack trace container
+      const stackTrace = document.createElement('div');
+      stackTrace.className = 'stack-trace';
+      
+      // Add stack trace content
+      if (error.stack) {
+        const stackLines = error.stack.split('\n');
+        stackLines.forEach((line, index) => {
+          const lineElement = document.createElement('div');
+          lineElement.className = 'stack-trace-line' + (index === 0 ? ' error' : '');
+          lineElement.textContent = line;
+          stackTrace.appendChild(lineElement);
+        });
+      } else {
+        const lineElement = document.createElement('div');
+        lineElement.className = 'stack-trace-line';
+        lineElement.textContent = 'No stack trace available';
+        stackTrace.appendChild(lineElement);
+      }
+
+      // Add click handler for toggling
+      errorHeader.addEventListener('click', () => {
+        stackTrace.classList.toggle('expanded');
+        errorToggle.textContent = stackTrace.classList.contains('expanded') ? 'Hide details' : 'Show details';
+      });
+
+      // Assemble the error message
+      errorHeader.appendChild(errorTitle);
+      errorHeader.appendChild(errorToggle);
+      errorContainer.appendChild(errorHeader);
+      errorContainer.appendChild(stackTrace);
+      this.slider.appendChild(errorContainer);
     }, this.revSliderConfig.network.errorTimeout);
   }
 
@@ -602,6 +655,8 @@ class NetworkMonitor {
 
     } catch (error) {
       console.error('Error updating IPs:', error);
+      // Pass the full error object to setErrorState
+      this.setErrorState(error);
       // Update cards to show error state
       ['public', 'docker', 'non-private', 'private'].forEach(cardId => {
         this.updateCard(cardId, {

@@ -39,7 +39,7 @@ zscaler/
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/jose-guzman/zscaler.git
 cd zscaler
 ```
 
@@ -148,22 +148,22 @@ Features:
 
 1. Check server health:
 ```bash
-curl http://localhost:3000/api/health
+curl http://localhost:3002/api/health
 ```
 
 2. View detailed metrics:
 ```bash
-curl http://localhost:3000/api/health/metrics
+curl http://localhost:3002/api/health/metrics
 ```
 
 3. Access debug information:
 ```bash
-curl http://localhost:3000/api/health/debug
+curl http://localhost:3002/api/health/debug
 ```
 
 4. Monitor network status:
 ```bash
-curl http://localhost:3000/api/monitor/stats
+curl http://localhost:3002/api/monitor/stats
 ```
 
 ## Contributing
@@ -173,6 +173,36 @@ curl http://localhost:3000/api/monitor/stats
 3. Run tests
 4. Submit a pull request
 
+## Security Policy
+
+Please review our security policy before contributing:
+
+1. Report security vulnerabilities responsibly through our [Security Issue Form](https://github.com/jose-guzman/zscaler/security/advisories/new)
+2. Follow secure coding practices
+3. Keep dependencies up to date
+4. Enable 2FA for your GitHub account
+5. Never commit sensitive credentials
+
 ## License
 
-[Add your license information here]
+MIT License
+
+Copyright (c) 2025 Jose Guzman
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
