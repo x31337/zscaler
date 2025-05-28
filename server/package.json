@@ -2,6 +2,10 @@
   "name": "zscaler-api",
   "version": "1.0.0",
   "main": "portal-service.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/x31337/zscaler"
+  },
   "scripts": {
     "dev": "nodemon portal-service.js",
     "start": "node portal-service.js"

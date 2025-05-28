@@ -39,7 +39,7 @@ zscaler/
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/jose-guzman/zscaler.git
+git clone https://github.com/x31337/zscaler.git
 cd zscaler
 ```
 
@@ -177,7 +177,7 @@ curl http://localhost:3002/api/monitor/stats
 
 Please review our security policy before contributing:
 
-1. Report security vulnerabilities responsibly through our [Security Issue Form](https://github.com/jose-guzman/zscaler/security/advisories/new)
+1. Report security vulnerabilities responsibly through our [Security Issue Form](https://github.com/x31337/zscaler/security/advisories/new)
 2. Follow secure coding practices
 3. Keep dependencies up to date
 4. Enable 2FA for your GitHub account
